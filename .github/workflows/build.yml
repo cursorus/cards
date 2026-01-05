@@ -1,36 +1,31 @@
-name: Build and Deploy
+name: Build site
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main  # или master
+    paths:
+      - "images/**"
+      - "index.template.html"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Generate index.html from template
-        shell: bash
-        env:
-          PIN_HASH: ${{ secrets.PIN_HASH }}
+      - name: Generate Image List
         run: |
-          # Формируем JSON-массив имён файлов из папки images/
-          images=()
-          for file in images/*; do
-            [[ -f "$file" ]] && images+=("\"$(basename "$file")\"")
-          done
-          IMAGES_ARRAY="[$(IFS=,; echo "${images[*]}")]"
-          echo "Found images: $IMAGES_ARRAY"
+          # Собираем список файлов в формате ["1.jpg", "2.png"]
+          IMAGES_JSON=$(ls images | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Generated list: $IMAGES_JSON"
+          
+          # Заменяем метку в шаблоне и создаем готовый index.html
+          # Используем sed с альтернативным разделителем |
+          sed "s|__IMAGES_LIST__|$IMAGES_JSON|g" index.template.html > index.html
 
-          # Заменяем плейсхолдеры __IMAGES__ и __PIN_HASH__ в шаблоне
-          sed "s|__IMAGES__|$IMAGES_ARRAY|g; s|__PIN_HASH__|$PIN_HASH|g" index.template.html > index.html
-
-      - name: Commit and Push changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "ci: build index.html" || echo "No changes to commit"
-          git push
+      - name: Commit and Push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-update image list"
+          file_pattern: 'index.html'
