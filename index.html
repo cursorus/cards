@@ -3,86 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lock + Cards</title>
+<title>Cards</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+
 <style>
 body {
   margin: 0;
   height: 100vh;
-  background: #111;
+  background: #0f0f0f;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
-/* LOCK SCREEN */
-#lock {
-  position: fixed;
-  inset: 0;
-  background: #0f0f0f;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 25px;
-  z-index: 10;
-}
-
-/* Dots */
-#dots {
-  display: flex;
-  gap: 14px;
-}
-.dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #333;
-}
-.dot.filled {
-  background: #fff;
-}
-
-/* Keypad */
-.keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 70px);
-  gap: 12px;
-}
-.keypad button {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: none;
-  background: #1c1c1c;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-  transition: 0.1s;
-}
-.keypad button:active {
-  transform: scale(0.95);
-}
-
-/* APP / CARDS */
-#app {
+.swiper {
   width: 320px;
   height: 420px;
-  position: relative;
-  display: none;
 }
 
-.card {
-  position: absolute;
-  inset: 0;
+.swiper-slide {
   border-radius: 20px;
   overflow: hidden;
   background: #222;
   box-shadow: 0 20px 40px rgba(0,0,0,.5);
-  transition: transform 0.4s ease, opacity 0.4s ease;
 }
-.card img {
+
+.swiper-slide img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -91,114 +39,41 @@ body {
 </head>
 <body>
 
-<!-- LOCK SCREEN -->
-<div id="lock">
-  <div id="dots">
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-  </div>
-
-  <div class="keypad" id="keys">
-    <!-- Кнопки будут добавлены JS -->
-  </div>
+<div class="swiper">
+  <div class="swiper-wrapper" id="cards"></div>
 </div>
 
-<!-- APP -->
-<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script>
-/* ===== PIN LOGIC ===== */
-const PIN_HASH = "4225466f46976e5877d0c8f7a77eafbf97a92841dedabae705816fa4c76e033f"; // <- GitHub Secrets
-let input = "";
-
-const dots = document.querySelectorAll(".dot");
-const keys = document.getElementById("keys");
-const lock = document.getElementById("lock");
-const app = document.getElementById("app");
-
-function updateDots() {
-  dots.forEach((d,i) => d.classList.toggle("filled", i<input.length));
-}
-
-function hash(v) {
-  return CryptoJS.SHA256(v).toString();
-}
-
-// Создаём кнопки: 1 2 3 / 4 5 6 / 7 8 9 / 0
-const layout = [
-  1,2,3,
-  4,5,6,
-  7,8,9,
-  null,0,null
+// ===== AUTO LOAD IMAGES =====
+// GitHub Pages: вручную список не получить,
+// поэтому просто перечисляешь файлы здесь ОДИН РАЗ
+const images = [
+  "cat.jpg",
+  "dog.png",
+  "photo.webp"
+  // добавляй любые
 ];
 
-layout.forEach(n=>{
-  const btn = document.createElement("button");
-  if(n===null){
-    btn.style.visibility="hidden"; // пустая ячейка
-    btn.disabled = true;
-  } else {
-    btn.textContent = n;
-    btn.onclick = ()=>{
-      if(input.length>=4) return;
-      input += n;
-      updateDots();
-      if(input.length===4){
-        if(hash(input)===PIN_HASH) unlock();
-        else reset();
-      }
-    };
-  }
-  keys.appendChild(btn);
+const container = document.getElementById("cards");
+
+images.forEach(img=>{
+  const slide = document.createElement("div");
+  slide.className = "swiper-slide";
+  slide.innerHTML = `<img src="images/${img}">`;
+  container.appendChild(slide);
 });
 
-function reset(){
-  input="";
-  setTimeout(updateDots,150);
-}
-
-function unlock(){
-  lock.style.display="none";
-  app.style.display="block";
-  initCards();
-}
-
-/* ===== STACK CARDS ===== */
-const images = "IMG_3351.jpeg
-IMG_3352.jpeg
-IMG_3353.jpeg
-"; // <- массив картинок подставляет Action
-let index = 0;
-
-function initCards(){
-  app.innerHTML="";
-  for(let i=index;i<images.length;i++){
-    const c=document.createElement("div");
-    c.className="card";
-    c.style.zIndex = images.length-i;
-    c.style.transform =
-      `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.03})`;
-    c.innerHTML = `<img src="images/${images[i]}">`;
-    app.appendChild(c);
+// ===== SWIPER =====
+new Swiper(".swiper", {
+  effect: "cards",
+  grabCursor: true,
+  cardsEffect: {
+    slideShadows: false
   }
-
-  app.onclick = swipe;
-}
-
-function swipe(){
-  const card = document.querySelector(".card");
-  if(!card) return;
-  card.style.transform="translateX(420px) rotate(15deg)";
-  card.style.opacity="0";
-  setTimeout(()=>{
-    index++;
-    if(index>=images.length) index=0;
-    initCards();
-  },400);
-}
+});
 </script>
+
 </body>
 </html>
