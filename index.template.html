@@ -43,57 +43,25 @@
 <!-- Подключаем Swiper JS из CDN -->
 <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
-  let entered = "";
-  const pinDisplay = document.getElementById('pin-display');
-  const lockScreen = document.getElementById('lock-screen');
-  const swiperContainer = document.getElementById('swiper-container');
-  // SHA-256 хеш правильного PIN (будет заменён в CI)
-  const PIN_HASH = "__PIN_HASH__";
+// Автоматика заменит __IMAGES_LIST__ на реальный список
+const images = __IMAGES_LIST__;
 
-  function press(digit) {
-    if (entered.length >= 4) return;
-    entered += digit;
-    // Отобразить введённые цифры (заменяем на звёздочки)
-    pinDisplay.textContent = '*'.repeat(entered.length) + '_'.repeat(4 - entered.length);
-    if (entered.length === 4) {
-      // Вычисляем SHA-256-хеш введённой строки
-      window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(entered))
-        .then(buffer => {
-          // Конвертируем ArrayBuffer в hex-строку
-          const hashArray = Array.from(new Uint8Array(buffer));
-          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-          if (hashHex === PIN_HASH) {
-            // Успешная разблокировка
-            lockScreen.style.display = 'none';
-            swiperContainer.style.display = 'block';
-            initSwiper();
-          } else {
-            // Неверный PIN: сброс
-            alert('Неверный PIN');
-            entered = "";
-            pinDisplay.textContent = '____';
-          }
-        });
-    }
-  }
+const container = document.getElementById("cards");
 
-  function initSwiper() {
-    const imageNames = __IMAGES__;  // Массив имён файлов, подставленный CI
-    const wrapper = document.getElementById('swiper-wrapper');
-    imageNames.forEach(name => {
-      const slide = document.createElement('div');
-      slide.className = 'swiper-slide';
-      const img = document.createElement('img');
-      img.src = 'images/' + name;
-      slide.appendChild(img);
-      wrapper.appendChild(slide);
-    });
-    // Инициализация Swiper с эффектом «cards»
-    new Swiper('.swiper', {
-      effect: 'cards',           // Используем эффект «cards» [oai_citation:1‡swiperjs.com](https://swiperjs.com/swiper-api#:~:text=const%20swiper%20%3D%20new%20Swiper%28%27,)
-      grabCursor: true,
-    });
-  }
+images.forEach(img => {
+  const slide = document.createElement("div");
+  slide.className = "swiper-slide";
+  // Убедись, что папка называется именно images
+  slide.innerHTML = `<img src="images/${img}" alt="card">`;
+  container.appendChild(slide);
+});
+
+// Инициализация Swiper (оставь как было)
+new Swiper(".swiper", {
+  effect: "cards",
+  grabCursor: true,
+});
 </script>
+
 </body>
 </html>
