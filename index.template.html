@@ -3,26 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cards</title>
-
+<title>Stack Cards</title>
 <style>
-* { box-sizing: border-box; }
 body {
   margin: 0;
   height: 100vh;
-  background: #0f0f0f;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #111;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
-/* ===== LOCK ===== */
+/* ===== LOCK SCREEN ===== */
 #lock {
   position: fixed;
   inset: 0;
-  background: #0f0f0f;
+  background: #111a;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -36,8 +34,8 @@ body {
   gap: 14px;
 }
 .dot {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #333;
 }
@@ -59,12 +57,13 @@ body {
   color: #fff;
   font-size: 26px;
   cursor: pointer;
+  transition: 0.1s;
 }
 .keypad button:active {
   transform: scale(0.95);
 }
 
-/* ===== CARDS ===== */
+/* ===== APP ===== */
 #app {
   width: 320px;
   height: 420px;
@@ -79,9 +78,8 @@ body {
   overflow: hidden;
   background: #222;
   box-shadow: 0 20px 40px rgba(0,0,0,.5);
-  transition: transform .4s ease, opacity .4s ease;
+  transition: transform 0.4s ease, opacity 0.4s ease;
 }
-
 .card img {
   width: 100%;
   height: 100%;
@@ -89,10 +87,9 @@ body {
 }
 </style>
 </head>
-
 <body>
 
-<!-- LOCKSCREEN -->
+<!-- LOCK SCREEN -->
 <div id="lock">
   <div id="dots">
     <div class="dot"></div>
@@ -100,18 +97,16 @@ body {
     <div class="dot"></div>
     <div class="dot"></div>
   </div>
-
   <div class="keypad" id="keys"></div>
 </div>
 
-<!-- CARDS -->
+<!-- APP -->
 <div id="app"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
 <script>
-/* ===== PIN ===== */
-const PIN_HASH = "__PIN_HASH__"; // <-- ИЗ GITHUB SECRETS
+// ===== PIN LOGIC =====
+const PIN_HASH = "__PIN_HASH__"; // <- GitHub Secret через Action
 let input = "";
 
 const dots = document.querySelectorAll(".dot");
@@ -119,59 +114,56 @@ const keys = document.getElementById("keys");
 const lock = document.getElementById("lock");
 const app = document.getElementById("app");
 
-function updateDots() {
-  dots.forEach((d, i) => {
-    d.classList.toggle("filled", i < input.length);
+function updateDots(){
+  dots.forEach((d,i)=>{
+    d.classList.toggle("filled", i<input.length);
   });
 }
 
-function hash(v) {
+function hash(v){
   return CryptoJS.SHA256(v).toString();
 }
 
-for (let i = 1; i <= 9; i++) addKey(i);
+for(let i=1;i<=9;i++) addKey(i);
 addKey(0);
 
-function addKey(n) {
-  const b = document.createElement("button");
-  b.textContent = n;
-  b.onclick = () => {
-    if (input.length >= 4) return;
-    input += n;
+function addKey(n){
+  const b=document.createElement("button");
+  b.textContent=n;
+  b.onclick=()=>{
+    if(input.length>=4) return;
+    input+=n;
     updateDots();
-
-    if (input.length === 4) {
-      if (hash(input) === PIN_HASH) unlock();
+    if(input.length===4){
+      if(hash(input)===PIN_HASH) unlock();
       else reset();
     }
   };
   keys.appendChild(b);
 }
 
-function reset() {
-  input = "";
-  setTimeout(updateDots, 150);
+function reset(){
+  input="";
+  setTimeout(updateDots,150);
 }
 
-function unlock() {
-  lock.style.display = "none";
-  app.style.display = "block";
+function unlock(){
+  lock.style.display="none";
+  app.style.display="block";
   initCards();
 }
 
-/* ===== CARDS ===== */
-const images = __IMAGES__; // <-- АВТО ИЗ images/
+// ===== STACK CARDS =====
+const images = __IMAGES__; // <- GitHub Action подставляет массив картинок
 let index = 0;
 
-function initCards() {
-  app.innerHTML = "";
-
-  for (let i = index; i < images.length; i++) {
-    const c = document.createElement("div");
-    c.className = "card";
-    c.style.zIndex = images.length - i;
-    c.style.transform =
-      `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.04})`;
+function initCards(){
+  app.innerHTML="";
+  for(let i=index;i<images.length;i++){
+    const c=document.createElement("div");
+    c.className="card";
+    c.style.zIndex = images.length-i;
+    c.style.transform = `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.03})`;
     c.innerHTML = `<img src="images/${images[i]}">`;
     app.appendChild(c);
   }
@@ -179,20 +171,17 @@ function initCards() {
   app.onclick = swipe;
 }
 
-function swipe() {
+function swipe(){
   const card = document.querySelector(".card");
-  if (!card) return;
-
+  if(!card) return;
   card.style.transform = "translateX(400px) rotate(15deg)";
   card.style.opacity = "0";
-
-  setTimeout(() => {
+  setTimeout(()=>{
     index++;
-    if (index >= images.length) index = 0;
+    if(index>=images.length) index=0;
     initCards();
-  }, 400);
+  },400);
 }
 </script>
-
 </body>
 </html>
