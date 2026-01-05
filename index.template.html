@@ -6,7 +6,6 @@
 <title>Cards</title>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
-
 <style>
 body {
   margin: 0;
@@ -16,6 +15,7 @@ body {
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  font-family: Arial, sans-serif;
 }
 
 .swiper {
@@ -44,17 +44,9 @@ body {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
 <script>
-// ===== AUTO LOAD IMAGES =====
-// GitHub Pages: вручную список не получить,
-// поэтому просто перечисляешь файлы здесь ОДИН РАЗ
-const images = [
-  "cat.jpg",
-  "dog.png",
-  "photo.webp"
-  // добавляй любые
-];
+// Массив картинок подставит GitHub Actions
+const images = __IMAGES__;
 
 const container = document.getElementById("cards");
 
@@ -65,7 +57,7 @@ images.forEach(img=>{
   container.appendChild(slide);
 });
 
-// ===== SWIPER =====
+// Инициализация Swiper с эффектом "cards"
 new Swiper(".swiper", {
   effect: "cards",
   grabCursor: true,
