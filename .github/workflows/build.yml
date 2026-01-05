@@ -1,12 +1,18 @@
-name: Build site with secret PIN
+name: Build site
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - "images/**"
+      - "index.html"
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,7 +23,12 @@ jobs:
           HASH=$(echo -n "$PIN" | sha256sum | cut -d' ' -f1)
           sed -i "s/__PIN_HASH__/$HASH/g" index.html
 
-      - name: Commit built file
+      - name: Inject images list
+        run: |
+          IMAGES=$(ls images | jq -R . | jq -s .)
+          sed -i "s|__IMAGES__|$IMAGES|g" index.html
+
+      - name: Commit build
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "build: inject pin hash"
+          commit_message: "build: update images & pin"
