@@ -3,39 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stack Cards</title>
+<title>Lock</title>
+
 <style>
 body {
   margin: 0;
   height: 100vh;
-  background: #111;
+  background: #0f0f0f;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
-/* ===== LOCK SCREEN ===== */
+/* ===== LOCK ===== */
 #lock {
   position: fixed;
   inset: 0;
-  background: #111a;
+  background: #0f0f0f;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 30px;
+  gap: 35px;
   z-index: 10;
 }
 
 #dots {
   display: flex;
-  gap: 14px;
+  gap: 16px;
 }
 .dot {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #333;
 }
@@ -43,27 +44,30 @@ body {
   background: #fff;
 }
 
+/* ===== KEYPAD ===== */
 .keypad {
   display: grid;
-  grid-template-columns: repeat(3, 80px);
-  gap: 15px;
-}
-.keypad button {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: none;
-  background: #1e1e1e;
-  color: #fff;
-  font-size: 26px;
-  cursor: pointer;
-  transition: 0.1s;
-}
-.keypad button:active {
-  transform: scale(0.95);
+  grid-template-columns: repeat(3, 70px);
+  gap: 18px;
 }
 
-/* ===== APP ===== */
+.key {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #1c1c1c;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.key:active {
+  transform: scale(0.92);
+}
+.key.empty {
+  background: transparent;
+  pointer-events: none;
+}
+
+/* ===== CARDS ===== */
 #app {
   width: 320px;
   height: 420px;
@@ -78,7 +82,7 @@ body {
   overflow: hidden;
   background: #222;
   box-shadow: 0 20px 40px rgba(0,0,0,.5);
-  transition: transform 0.4s ease, opacity 0.4s ease;
+  transition: transform .4s ease, opacity .4s ease;
 }
 .card img {
   width: 100%;
@@ -89,7 +93,7 @@ body {
 </head>
 <body>
 
-<!-- LOCK SCREEN -->
+<!-- LOCK -->
 <div id="lock">
   <div id="dots">
     <div class="dot"></div>
@@ -97,6 +101,7 @@ body {
     <div class="dot"></div>
     <div class="dot"></div>
   </div>
+
   <div class="keypad" id="keys"></div>
 </div>
 
@@ -104,9 +109,10 @@ body {
 <div id="app"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 <script>
-// ===== PIN LOGIC =====
-const PIN_HASH = "__PIN_HASH__"; // <- GitHub Secret через Action
+/* ===== PIN ===== */
+const PIN_HASH = "__PIN_HASH__"; // из GitHub Secrets
 let input = "";
 
 const dots = document.querySelectorAll(".dot");
@@ -114,33 +120,38 @@ const keys = document.getElementById("keys");
 const lock = document.getElementById("lock");
 const app = document.getElementById("app");
 
-function updateDots(){
-  dots.forEach((d,i)=>{
-    d.classList.toggle("filled", i<input.length);
-  });
+function updateDots() {
+  dots.forEach((d,i)=>d.classList.toggle("filled", i < input.length));
 }
 
 function hash(v){
   return CryptoJS.SHA256(v).toString();
 }
 
-for(let i=1;i<=9;i++) addKey(i);
-addKey(0);
+/* KEYPAD LAYOUT (БЕЗ ЦИФР НА ЭКРАНЕ) */
+const layout = [
+  1,2,3,
+  4,5,6,
+  7,8,9,
+  null,0,null
+];
 
-function addKey(n){
-  const b=document.createElement("button");
-  b.textContent=n;
-  b.onclick=()=>{
-    if(input.length>=4) return;
-    input+=n;
-    updateDots();
-    if(input.length===4){
-      if(hash(input)===PIN_HASH) unlock();
-      else reset();
-    }
-  };
-  keys.appendChild(b);
-}
+layout.forEach(n=>{
+  const k = document.createElement("div");
+  k.className = n===null ? "key empty" : "key";
+  if(n!==null){
+    k.onclick = ()=>{
+      if(input.length>=4) return;
+      input += n;
+      updateDots();
+      if(input.length===4){
+        if(hash(input)===PIN_HASH) unlock();
+        else reset();
+      }
+    };
+  }
+  keys.appendChild(k);
+});
 
 function reset(){
   input="";
@@ -153,8 +164,8 @@ function unlock(){
   initCards();
 }
 
-// ===== STACK CARDS =====
-const images = __IMAGES__; // <- GitHub Action подставляет массив картинок
+/* ===== CARDS ===== */
+const images = __IMAGES__;
 let index = 0;
 
 function initCards(){
@@ -163,19 +174,19 @@ function initCards(){
     const c=document.createElement("div");
     c.className="card";
     c.style.zIndex = images.length-i;
-    c.style.transform = `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.03})`;
+    c.style.transform =
+      `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.04})`;
     c.innerHTML = `<img src="images/${images[i]}">`;
     app.appendChild(c);
   }
-
   app.onclick = swipe;
 }
 
 function swipe(){
   const card = document.querySelector(".card");
   if(!card) return;
-  card.style.transform = "translateX(400px) rotate(15deg)";
-  card.style.opacity = "0";
+  card.style.transform="translateX(420px) rotate(15deg)";
+  card.style.opacity="0";
   setTimeout(()=>{
     index++;
     if(index>=images.length) index=0;
@@ -183,5 +194,6 @@ function swipe(){
   },400);
 }
 </script>
+
 </body>
 </html>
