@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack Cards</title>
+<style>
+body {
+  margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background: #111;
+  font-family: Arial, sans-serif; overflow: hidden;
+}
+
+#lockscreen {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
+}
+
+#dots { font-size: 36px; letter-spacing: 10px; margin-bottom: 20px; color: #fff; }
+.keypad { display: grid; grid-template-columns: repeat(3, 70px); gap: 12px; }
+.keypad button { height: 70px; border-radius: 50%; border: none; font-size: 22px; background: #1c1c1c; color: white; cursor: pointer; transition: 0.2s; }
+.keypad button:hover { background: #333; transform: scale(1.05); }
+
+#app { display: none; position: relative; width: 320px; height: 420px; }
+.card {
+  position: absolute; width: 100%; height: 100%; border-radius: 20px; overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.5); transition: transform 0.4s ease, opacity 0.4s ease; background: #222;
+}
+.card img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+</head>
+<body>
+
+<div id="lockscreen">
+  <div id="dots">○ ○ ○ ○</div>
+  <div class="keypad" id="keys"></div>
+</div>
+
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+<script>
+// ====== PIN LOGIC ======
+const PIN_HASH = "4225466f46976e5877d0c8f7a77eafbf97a92841dedabae705816fa4c76e033f";
+let input = "";
+const dots = document.getElementById("dots");
+const lock = document.getElementById("lockscreen");
+const app = document.getElementById("app");
+const keys = document.getElementById("keys");
+
+function updateDots(){dots.textContent=input.padEnd(4,"○").split("").join(" ");}
+
+function md5(str){return CryptoJS.MD5(str).toString();}
+
+for(let i=1;i<=9;i++) addKey(i);
+addKey(0);
+
+function addKey(n){
+  const b=document.createElement("button"); b.textContent=n;
+  b.onclick=()=>{
+    if(input.length>=4) return;
+    input+=n; updateDots();
+    if(input.length===4){
+      if(md5(input)===PIN_HASH) unlock();
+      else{ input=""; updateDots(); }
+    }
+  };
+  keys.appendChild(b);
+}
+
+function unlock(){
+  lock.style.display="none";
+  app.style.display="block";
+  showStackCards();
+}
+
+// ====== STACK CARDS LOGIC ======
+const images = "IMG_3351.jpeg
+IMG_3352.jpeg
+IMG_3353.jpeg
+"; // массив картинок подставляется Action
+let currentIndex = 0;
+
+function showStackCards(){
+  app.innerHTML = "";
+  for(let i=currentIndex;i<images.length;i++){
+    const c = document.createElement("div");
+    c.className = "card";
+    c.style.zIndex = images.length-i;
+    c.style.transform = `translate(${(i-currentIndex)*10}px, ${(i-currentIndex)*10}px) scale(${1-(i-currentIndex)*0.03})`;
+    c.innerHTML=`<img src="images/${images[i]}">`;
+    app.appendChild(c);
+  }
+
+  app.addEventListener("click",()=>{
+    const cards = document.querySelectorAll(".card");
+    if(cards.length===0) return;
+    const top = cards[0];
+    top.style.transform="translateX(500px) rotate(20deg)";
+    top.style.opacity="0";
+    setTimeout(()=>{
+      currentIndex++;
+      if(currentIndex>=images.length) currentIndex=0;
+      showStackCards();
+    },400);
+  }, { once: true });
+}
+</script>
+</body>
+</html>
