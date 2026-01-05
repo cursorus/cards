@@ -1,30 +1,36 @@
-name: Build Cards
+name: Build and Deploy
 
 on:
   push:
-    paths:
-      - 'images/**'
-      - 'index.template.html'
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Generate images array and build index.html
-      run: |
-        IMAGES=$(ls images | jq -R . | jq -s .)
-# Экранируем массив для sed
-        IMAGES_ESCAPED=$(echo $IMAGES | sed 's|/|\\/|g')
-        sed "s|__IMAGES__|$IMAGES_ESCAPED|g" index.template.html > index.html
+      - name: Generate index.html from template
+        shell: bash
+        env:
+          PIN_HASH: ${{ secrets.PIN_HASH }}
+        run: |
+          # Формируем JSON-массив имён файлов из папки images/
+          images=()
+          for file in images/*; do
+            [[ -f "$file" ]] && images+=("\"$(basename "$file")\"")
+          done
+          IMAGES_ARRAY="[$(IFS=,; echo "${images[*]}")]"
+          echo "Found images: $IMAGES_ARRAY"
 
-    - name: Commit changes
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add index.html
-        git diff --cached --quiet || git commit -m "Update cards"
-        git push
+          # Заменяем плейсхолдеры __IMAGES__ и __PIN_HASH__ в шаблоне
+          sed "s|__IMAGES__|$IMAGES_ARRAY|g; s|__PIN_HASH__|$PIN_HASH|g" index.template.html > index.html
+
+      - name: Commit and Push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "ci: build index.html" || echo "No changes to commit"
+          git push
