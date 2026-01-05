@@ -3,21 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lock</title>
-
+<title>Lock + Cards</title>
 <style>
 body {
   margin: 0;
   height: 100vh;
-  background: #0f0f0f;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #111;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
-/* ===== LOCK ===== */
+/* LOCK SCREEN */
 #lock {
   position: fixed;
   inset: 0;
@@ -26,17 +25,18 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 35px;
+  gap: 25px;
   z-index: 10;
 }
 
+/* Dots */
 #dots {
   display: flex;
-  gap: 16px;
+  gap: 14px;
 }
 .dot {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #333;
 }
@@ -44,30 +44,28 @@ body {
   background: #fff;
 }
 
-/* ===== KEYPAD ===== */
+/* Keypad */
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 70px);
-  gap: 18px;
+  gap: 12px;
 }
-
-.key {
+.keypad button {
   width: 70px;
   height: 70px;
   border-radius: 50%;
+  border: none;
   background: #1c1c1c;
+  color: #fff;
+  font-size: 24px;
   cursor: pointer;
-  transition: 0.15s;
+  transition: 0.1s;
 }
-.key:active {
-  transform: scale(0.92);
-}
-.key.empty {
-  background: transparent;
-  pointer-events: none;
+.keypad button:active {
+  transform: scale(0.95);
 }
 
-/* ===== CARDS ===== */
+/* APP / CARDS */
 #app {
   width: 320px;
   height: 420px;
@@ -82,7 +80,7 @@ body {
   overflow: hidden;
   background: #222;
   box-shadow: 0 20px 40px rgba(0,0,0,.5);
-  transition: transform .4s ease, opacity .4s ease;
+  transition: transform 0.4s ease, opacity 0.4s ease;
 }
 .card img {
   width: 100%;
@@ -93,7 +91,7 @@ body {
 </head>
 <body>
 
-<!-- LOCK -->
+<!-- LOCK SCREEN -->
 <div id="lock">
   <div id="dots">
     <div class="dot"></div>
@@ -102,17 +100,18 @@ body {
     <div class="dot"></div>
   </div>
 
-  <div class="keypad" id="keys"></div>
+  <div class="keypad" id="keys">
+    <!-- Кнопки будут добавлены JS -->
+  </div>
 </div>
 
 <!-- APP -->
 <div id="app"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
 <script>
-/* ===== PIN ===== */
-const PIN_HASH = "__PIN_HASH__"; // из GitHub Secrets
+/* ===== PIN LOGIC ===== */
+const PIN_HASH = "__PIN_HASH__"; // <- GitHub Secrets
 let input = "";
 
 const dots = document.querySelectorAll(".dot");
@@ -121,14 +120,14 @@ const lock = document.getElementById("lock");
 const app = document.getElementById("app");
 
 function updateDots() {
-  dots.forEach((d,i)=>d.classList.toggle("filled", i < input.length));
+  dots.forEach((d,i) => d.classList.toggle("filled", i<input.length));
 }
 
-function hash(v){
+function hash(v) {
   return CryptoJS.SHA256(v).toString();
 }
 
-/* KEYPAD LAYOUT (БЕЗ ЦИФР НА ЭКРАНЕ) */
+// Создаём кнопки: 1 2 3 / 4 5 6 / 7 8 9 / 0
 const layout = [
   1,2,3,
   4,5,6,
@@ -137,10 +136,13 @@ const layout = [
 ];
 
 layout.forEach(n=>{
-  const k = document.createElement("div");
-  k.className = n===null ? "key empty" : "key";
-  if(n!==null){
-    k.onclick = ()=>{
+  const btn = document.createElement("button");
+  if(n===null){
+    btn.style.visibility="hidden"; // пустая ячейка
+    btn.disabled = true;
+  } else {
+    btn.textContent = n;
+    btn.onclick = ()=>{
       if(input.length>=4) return;
       input += n;
       updateDots();
@@ -150,7 +152,7 @@ layout.forEach(n=>{
       }
     };
   }
-  keys.appendChild(k);
+  keys.appendChild(btn);
 });
 
 function reset(){
@@ -164,8 +166,8 @@ function unlock(){
   initCards();
 }
 
-/* ===== CARDS ===== */
-const images = __IMAGES__;
+/* ===== STACK CARDS ===== */
+const images = __IMAGES__; // <- массив картинок подставляет Action
 let index = 0;
 
 function initCards(){
@@ -175,10 +177,11 @@ function initCards(){
     c.className="card";
     c.style.zIndex = images.length-i;
     c.style.transform =
-      `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.04})`;
+      `translate(${(i-index)*10}px, ${(i-index)*10}px) scale(${1-(i-index)*0.03})`;
     c.innerHTML = `<img src="images/${images[i]}">`;
     app.appendChild(c);
   }
+
   app.onclick = swipe;
 }
 
@@ -194,6 +197,5 @@ function swipe(){
   },400);
 }
 </script>
-
 </body>
 </html>
