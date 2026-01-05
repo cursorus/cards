@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "images/**"
-      - "index.html"
+      - "index.template.html"
 
 permissions:
   contents: write
@@ -12,23 +12,23 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inject PIN hash
+      - name: Read images
+        id: images
+        run: |
+          IMGS=$(ls images | jq -R . | jq -s .)
+          echo "IMAGES=$IMGS" >> $GITHUB_ENV
+
+      - name: Inject PIN hash and images
         env:
           PIN: ${{ secrets.SITE_PIN }}
         run: |
           HASH=$(echo -n "$PIN" | sha256sum | cut -d' ' -f1)
-          sed -i "s/__PIN_HASH__/$HASH/g" index.html
-
-      - name: Inject images list
-        run: |
-          IMAGES=$(ls images | jq -R . | jq -s .)
-          sed -i "s|__IMAGES__|$IMAGES|g" index.html
+          sed "s|__PIN_HASH__|$HASH|g; s|__IMAGES__|$IMAGES|g" index.template.html > index.html
 
       - name: Commit build
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "build: update images & pin"
+          commit_message: "build: update site"
