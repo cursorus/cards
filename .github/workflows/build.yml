@@ -16,11 +16,10 @@ jobs:
 
     - name: Generate images array and build index.html
       run: |
-        # Получаем список файлов из папки images
         IMAGES=$(ls images | jq -R . | jq -s .)
-        
-        # Подставляем массив в шаблон
-        sed "s|__IMAGES__|$IMAGES|g" index.template.html > index.html
+# Экранируем массив для sed
+        IMAGES_ESCAPED=$(echo $IMAGES | sed 's|/|\\/|g')
+        sed "s|__IMAGES__|$IMAGES_ESCAPED|g" index.template.html > index.html
 
     - name: Commit changes
       run: |
