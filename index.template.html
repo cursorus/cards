@@ -1,71 +1,99 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cards</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
-<style>
-body {
-  margin: 0;
-  height: 100vh;
-  background: #0f0f0f;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
-
-.swiper {
-  width: 320px;
-  height: 420px;
-}
-
-.swiper-slide {
-  border-radius: 20px;
-  overflow: hidden;
-  background: #222;
-  box-shadow: 0 20px 40px rgba(0,0,0,.5);
-}
-
-.swiper-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>PIN Lock + Swiper Cards</title>
+  <!-- Подключаем Swiper CSS из CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+  <style>
+    body { margin:0; font-family: sans-serif; text-align: center; }
+    #lock-screen { display: block; padding: 20px; }
+    #pin-display { font-size: 24px; letter-spacing: 10px; margin-bottom: 10px; }
+    #pin-buttons button { width: 60px; height: 60px; font-size: 24px; margin: 5px; }
+    #swiper-container { display: none; width: 100%; height: 100vh; }
+    .swiper { width: 100%; height: 100%; }
+    .swiper-slide img { width: 100%; height: auto; display: block; }
+  </style>
 </head>
 <body>
 
-<div class="swiper">
-  <div class="swiper-wrapper" id="cards"></div>
+<div id="lock-screen">
+  <div>Введите PIN-код:</div>
+  <div id="pin-display">____</div>
+  <div id="pin-buttons">
+    <!-- Кнопки 0–9 для ввода PIN-кода -->
+    <button onclick="press(1)">1</button><button onclick="press(2)">2</button>
+    <button onclick="press(3)">3</button><br/>
+    <button onclick="press(4)">4</button><button onclick="press(5)">5</button>
+    <button onclick="press(6)">6</button><br/>
+    <button onclick="press(7)">7</button><button onclick="press(8)">8</button>
+    <button onclick="press(9)">9</button><br/>
+    <button onclick="press(0)">0</button>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<div id="swiper-container" class="swiper-container">
+  <div class="swiper">
+    <div class="swiper-wrapper" id="swiper-wrapper">
+      <!-- Слайды с карточками будут добавлены динамически -->
+    </div>
+  </div>
+</div>
+
+<!-- Подключаем Swiper JS из CDN -->
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
-// Массив картинок подставит GitHub Actions
-const images = __IMAGES__;
+  let entered = "";
+  const pinDisplay = document.getElementById('pin-display');
+  const lockScreen = document.getElementById('lock-screen');
+  const swiperContainer = document.getElementById('swiper-container');
+  // SHA-256 хеш правильного PIN (будет заменён в CI)
+  const PIN_HASH = "__PIN_HASH__";
 
-const container = document.getElementById("cards");
-
-images.forEach(img=>{
-  const slide = document.createElement("div");
-  slide.className = "swiper-slide";
-  slide.innerHTML = `<img src="images/${img}">`;
-  container.appendChild(slide);
-});
-
-// Инициализация Swiper с эффектом "cards"
-new Swiper(".swiper", {
-  effect: "cards",
-  grabCursor: true,
-  cardsEffect: {
-    slideShadows: false
+  function press(digit) {
+    if (entered.length >= 4) return;
+    entered += digit;
+    // Отобразить введённые цифры (заменяем на звёздочки)
+    pinDisplay.textContent = '*'.repeat(entered.length) + '_'.repeat(4 - entered.length);
+    if (entered.length === 4) {
+      // Вычисляем SHA-256-хеш введённой строки
+      window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(entered))
+        .then(buffer => {
+          // Конвертируем ArrayBuffer в hex-строку
+          const hashArray = Array.from(new Uint8Array(buffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          if (hashHex === PIN_HASH) {
+            // Успешная разблокировка
+            lockScreen.style.display = 'none';
+            swiperContainer.style.display = 'block';
+            initSwiper();
+          } else {
+            // Неверный PIN: сброс
+            alert('Неверный PIN');
+            entered = "";
+            pinDisplay.textContent = '____';
+          }
+        });
+    }
   }
-});
-</script>
 
+  function initSwiper() {
+    const imageNames = __IMAGES__;  // Массив имён файлов, подставленный CI
+    const wrapper = document.getElementById('swiper-wrapper');
+    imageNames.forEach(name => {
+      const slide = document.createElement('div');
+      slide.className = 'swiper-slide';
+      const img = document.createElement('img');
+      img.src = 'images/' + name;
+      slide.appendChild(img);
+      wrapper.appendChild(slide);
+    });
+    // Инициализация Swiper с эффектом «cards»
+    new Swiper('.swiper', {
+      effect: 'cards',           // Используем эффект «cards» [oai_citation:1‡swiperjs.com](https://swiperjs.com/swiper-api#:~:text=const%20swiper%20%3D%20new%20Swiper%28%27,)
+      grabCursor: true,
+    });
+  }
+</script>
 </body>
 </html>
