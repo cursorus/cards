@@ -18,15 +18,16 @@ jobs:
       - name: Read images
         id: images
         run: |
-          IMGS=$(ls images | jq -R . | jq -s .)
-          echo "IMAGES=$IMGS" >> $GITHUB_ENV
+          IMAGES=$(ls images | jq -R -s '.')
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
 
       - name: Inject PIN hash and images
         env:
           PIN: ${{ secrets.SITE_PIN }}
         run: |
           HASH=$(echo -n "$PIN" | sha256sum | cut -d' ' -f1)
-          sed "s|__PIN_HASH__|$HASH|g; s|__IMAGES__|$IMAGES|g" index.template.html > index.html
+          # используем разделитель @, чтобы sed не сломался
+          sed "s@__PIN_HASH__@$HASH@g; s@__IMAGES__@$IMAGES@g" index.template.html > index.html
 
       - name: Commit build
         uses: stefanzweifel/git-auto-commit-action@v5
