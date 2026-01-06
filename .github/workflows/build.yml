@@ -1,4 +1,4 @@
-name: Build and Deploy Private Cards
+name: Build site
 
 on:
   push:
@@ -8,60 +8,39 @@ on:
       - "images/**"
       - "types.json"
       - "index.template.html"
-      - ".github/workflows/build.yml"
-
-permissions:
-  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Process Site Data
-        env:
-          # Передаем секрет и данные через ENV для безопасности и стабильности
-          SITE_PIN: ${{ secrets.SITE_PIN }}
+      - name: Process Images and JSON
         run: |
-          # 1. Генерируем хэш
-          PIN_HASH=$(echo -n "$SITE_PIN" | sha256sum | cut -d' ' -f1)
+          # 1. Читаем types.json для вставки в JS
+          TYPES_CONTENT=$(cat types.json | jq -c '.')
           
-          # 2. Собираем данные в переменные для Python
-          TYPES_JSON=$(cat types.json | jq -c '.')
-          mkdir -p images
-          ALL_FILES=$(ls images | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          # 2. Создаем пустой JSON объект для списка картинок
+          echo "{}" > images_list.json
           
-          # Экспортируем их, чтобы Python увидел их как env-переменные
-          echo "FINAL_PIN_HASH=$PIN_HASH" >> $GITHUB_ENV
-          echo "FINAL_TYPES_JSON=$TYPES_JSON" >> $GITHUB_ENV
-          echo "FINAL_ALL_FILES=$ALL_FILES" >> $GITHUB_ENV
+          # 3. Обходим все папки внутри images и собираем файлы
+          for dir in images/*/; do
+            folder=$(basename "$dir")
+            # Собираем список файлов в этой папке
+            files=$(ls "$dir" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            # Добавляем в общий список
+            jq --arg key "$folder" --argjson val "$files" '.[$key] = $val' images_list.json > tmp.json && mv tmp.json images_list.json
+          done
+          
+          IMAGES_DATA=$(cat images_list.json | jq -c '.')
 
-      - name: Inject data with Python
-        run: |
-          python3 -c "
-          import os
-          
-          # Достаем данные из окружения
-          pin_hash = os.getenv('FINAL_PIN_HASH')
-          types_json = os.getenv('FINAL_TYPES_JSON')
-          all_files = os.getenv('FINAL_ALL_FILES')
-          
-          with open('index.template.html', 'r', encoding='utf-8') as f:
-              content = f.read()
-          
-          # Безопасно заменяем метки
-          content = content.replace('__PIN_HASH__', pin_hash)
-          content = content.replace('__TYPES_JSON__', types_json)
-          content = content.replace('__ALL_FILES__', all_files)
-          
-          with open('index.html', 'w', encoding='utf-8') as f:
-              f.write(content)
-          "
+          # 4. Вставляем данные в шаблон
+          sed "s|__IMAGES_DATA__|$IMAGES_DATA|g" index.template.html > index.html
+          # Используем другой разделитель для JSON, чтобы не конфликтовать с кавычками
+          sed -i "s|__TYPES_JSON__|$TYPES_CONTENT|g" index.html
 
       - name: Commit and Push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "System: Rebuild index.html"
+          commit_message: "Build: Updated images and categories"
           file_pattern: 'index.html'
