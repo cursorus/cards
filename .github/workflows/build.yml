@@ -20,47 +20,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get install jq -y
-
       - name: Process Site Data
         env:
-          # Берем ПИН из секретов репозитория
+          # Передаем секрет и данные через ENV для безопасности и стабильности
           SITE_PIN: ${{ secrets.SITE_PIN }}
         run: |
-          # 1. Создаем SHA-256 хэш пароля для проверки на фронтенде
+          # 1. Генерируем хэш
           PIN_HASH=$(echo -n "$SITE_PIN" | sha256sum | cut -d' ' -f1)
-          echo "Hash generated"
-
-          # 2. Читаем категории из types.json (валидация через jq)
+          
+          # 2. Собираем данные в переменные для Python
           TYPES_JSON=$(cat types.json | jq -c '.')
-
-          # 3. Собираем список всех файлов в папке images
-          # Если папки нет, создаем пустую, чтобы скрипт не падал
           mkdir -p images
           ALL_FILES=$(ls images | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          
+          # Экспортируем их, чтобы Python увидел их как env-переменные
+          echo "FINAL_PIN_HASH=$PIN_HASH" >> $GITHUB_ENV
+          echo "FINAL_TYPES_JSON=$TYPES_JSON" >> $GITHUB_ENV
+          echo "FINAL_ALL_FILES=$ALL_FILES" >> $GITHUB_ENV
 
-          # 4. Используем Python для безопасной замены меток в шаблоне
-          # Это гарантирует, что спецсимволы в JSON не сломают сборку
+      - name: Inject data with Python
+        run: |
           python3 -c "
-import os
-
-with open('index.template.html', 'r', encoding='utf-8') as f:
-    template = f.read()
-
-# Заменяем метки на реальные данные
-output = template.replace('__PIN_HASH__', '$PIN_HASH')
-output = output.replace('__TYPES_JSON__', '$TYPES_JSON')
-output = output.replace('__ALL_FILES__', '$ALL_FILES')
-
-with open('index.html', 'w', encoding='utf-8') as f:
-    f.write(output)
-"
-          echo "index.html successfully generated"
+          import os
+          
+          # Достаем данные из окружения
+          pin_hash = os.getenv('FINAL_PIN_HASH')
+          types_json = os.getenv('FINAL_TYPES_JSON')
+          all_files = os.getenv('FINAL_ALL_FILES')
+          
+          with open('index.template.html', 'r', encoding='utf-8') as f:
+              content = f.read()
+          
+          # Безопасно заменяем метки
+          content = content.replace('__PIN_HASH__', pin_hash)
+          content = content.replace('__TYPES_JSON__', types_json)
+          content = content.replace('__ALL_FILES__', all_files)
+          
+          with open('index.html', 'w', encoding='utf-8') as f:
+              f.write(content)
+          "
 
       - name: Commit and Push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "System: Rebuild index.html with new data"
+          commit_message: "System: Rebuild index.html"
           file_pattern: 'index.html'
-          push_options: '--force'
