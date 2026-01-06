@@ -62,48 +62,59 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-        // ВНИМАНИЕ: Если ты просто копируешь код в файл, 
-        // замени PIN_HASH на реальный хэш своего ПИН-кода для теста.
-        const PIN_HASH = "__PIN_HASH__"; 
-        const FILES = __ALL_FILES__;
+<script>
+    // 1. Сначала объявляем переменные (самый верх!)
+    var currentPin = ""; 
+    var PIN_HASH = "__PIN_HASH__";
+    var FILES = __ALL_FILES__;
+    var TYPES = {"funny":"смешные","arguments":"сора"};
+    var REPO = "ТВОЙ_ЛОГИН/ТВОЙ_РЕПО"; 
+    var sm, st; // переменные для слайдеров
 
-        let currentPin = "";
+    // 2. Функция ввода (теперь она точно увидит currentPin)
+    function press(n) {
+        console.log("Нажато:", n);
 
-        function press(n) {
-            console.log("Нажато:", n); // Проверка в консоли
+        if (n === 'C') {
+            currentPin = "";
+        } else if (currentPin.length < 4) {
+            currentPin += n;
+        }
 
-            if (n === 'C') {
-                currentPin = "";
-            } else if (currentPin.length < 4) {
-                currentPin += n;
-            }
-
-            // Обновляем точки через прямой ID (самый надежный способ)
-            for (let i = 0; i < 4; i++) {
-                const dot = document.getElementById('d' + i);
+        // Обновляем визуальные точки
+        var dots = document.querySelectorAll('.dot');
+        if (dots.length > 0) {
+            dots.forEach(function(dot, i) {
                 if (i < currentPin.length) {
-                    dot.classList.add('active');
+                    dot.classList.add('filled'); // или 'active', проверь свой CSS
                 } else {
-                    dot.classList.remove('active');
+                    dot.classList.remove('filled');
                 }
-            }
+            });
+        }
 
-            if (currentPin.length === 4) {
-                const hash = CryptoJS.SHA256(currentPin).toString();
-                console.log("Хэш ввода:", hash);
-                
-                if (hash === PIN_HASH) {
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    document.getElementById('app').classList.remove('hidden');
-                    // Здесь вызывай свою функцию инициализации Swiper
-                } else {
-                    alert("НЕВЕРНО");
-                    currentPin = "";
-                    for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.remove('active');
-                }
+        if (currentPin.length === 4) {
+            var hash = CryptoJS.SHA256(currentPin).toString();
+            if (hash === PIN_HASH) {
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('app-screen').classList.remove('hidden');
+                init(); // запускаем основную логику
+            } else {
+                alert("НЕВЕРНЫЙ ПИН");
+                currentPin = "";
+                dots.forEach(function(d) { d.classList.remove('filled'); });
             }
         }
-    </script>
+    }
+
+    // 3. Остальная логика (init, switchTab и т.д.)
+    function init() {
+        console.log("Приложение запущено");
+        // ... твой код инициализации Swiper и тегов ...
+    }
+    
+    // ... остальные твои функции (switchTab, handleAction и т.д.) ...
+</script>
+
 </body>
 </html>
