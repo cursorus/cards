@@ -1,3 +1,16 @@
+name: Build site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "images/**"
+      - "types.json"
+      - "index.template.html"
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
+
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
@@ -5,28 +18,26 @@
 
       - name: Process Images and JSON
         run: |
-          # 1. Читаем types.json
+          # 1. Читаем types.json для вставки в JS
           TYPES_CONTENT=$(cat types.json | jq -c '.')
           
-          # 2. Собираем ВСЕ файлы из папки images для переменной __ALL_FILES__
-          # (Твой JS код в шаблоне ожидает плоский список всех файлов .enc)
+          # 2. Собираем список ВСЕХ файлов .enc из папки images
+          # Это нужно для переменной __ALL_FILES__, которую ищет твой JS
           ALL_FILES=$(find images -type f -name "*.enc" -printf "%f\n" | jq -R -s -c 'split("\n") | map(select(length > 0))')
-
-          # 3. Подготовка index.html из шаблона
+          
+          # 3. Создаем index.html из шаблона
           cp index.template.html index.html
-
-          # 4. ВСТАВКА ДАННЫХ (Самый важный момент!)
-          # Вставляем ПИН-код из секретов GitHub
-          sed -i "s|__PIN_HASH__|${{ secrets.PIN_HASH }}|g" index.html
           
-          # Вставляем типы (категории)
-          sed -i "s|__TYPES_JSON__|$TYPES_CONTENT|g" index.html
+          # 4. Вставляем данные (используем @ как разделитель в sed, чтобы не конфликтовать с кавычками JSON)
+          sed -i "s@__TYPES_JSON__@$TYPES_CONTENT@g" index.html
+          sed -i "s@__ALL_FILES__@$ALL_FILES@g" index.html
           
-          # Вставляем список всех файлов
-          sed -i "s|__ALL_FILES__|$ALL_FILES|g" index.html
+          # Вставляем ПИН-ХЭШ из секретов GitHub
+          # Важно: секрет должен называться PIN_HASH в настройках репозитория
+          sed -i "s@__PIN_HASH__@${{ secrets.PIN_HASH }}@g" index.html
 
       - name: Commit and Push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Build: Updated images, categories and security"
+          commit_message: "Build: Updated images and security"
           file_pattern: 'index.html'
