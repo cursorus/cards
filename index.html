@@ -5,16 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Private Safe</title>
     
-    <meta name="apple-mobile-web-app-title" content="Safe Vault">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon.png">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        :root { --bg: #050505; --accent: #fff; --pill: rgba(20,20,20,0.9); --gray: #555; --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        :root { --bg: #050505; --accent: #fff; --pill: rgba(20,20,20,0.8); --gray: #555; --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; }
         .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .hidden { display: none !important; }
@@ -23,41 +18,43 @@
         #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
         .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
         .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
-        .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.2); }
+        .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.3); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
-        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; -webkit-tap-highlight-color: transparent; }
+        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
 
-        /* НАВИГАЦИЯ И КНОПКА ДЕЙСТВИЯ */
-        .bottom-ui { position: fixed; bottom: 35px; left: 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); padding: 6px; border-radius: 40px; border: 1px solid #222; }
-        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; padding: 8px 14px; border-radius: 30px; transition: 0.3s; min-width: 55px; }
-        .nav-item.active { color: var(--accent); background: #222; }
-        .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; margin-top: 2px; }
+        /* НАВИГАЦИЯ (СТАРАЯ ПАНЕЛЬ + КНОПКА СПРАВА) */
+        .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.4s var(--spring); min-width: 60px; }
+        .nav-item.active { color: var(--accent); background: #222; transform: scale(1.05); }
+        .nav-item .material-symbols-rounded { font-size: 22px; }
+        .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
 
-        .fab { width: 56px; height: 56px; background: var(--accent); color: #000; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.5); transition: 0.2s; }
-        .fab:active { transform: scale(0.9); }
+        .fab { width: 60px; height: 60px; background: var(--accent); color: #000; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); cursor: pointer; }
 
-        /* СЛАЙДЕРЫ */
-        .swiper { width: 320px; height: 460px; pointer-events: all; }
-        .swiper-slide { border-radius: 30px; background: #111; overflow: hidden; border: 1px solid #222; position: relative; }
+        /* СЛАЙДЕРЫ И КАРТОЧКИ */
+        .swiper { width: 310px; height: 440px; opacity: 0; transform: translateY(50px); transition: 0.8s var(--spring); }
+        .swiper.active-view { opacity: 1; transform: translateY(0); }
+        .swiper-slide { border-radius: 25px; background: #0f0f0f; overflow: hidden; border: 1px solid #111; position: relative; }
         .swiper-slide img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.5s; }
         .swiper-slide img.loaded { opacity: 1; }
 
-        /* СТАТУСЫ */
-        .status-layer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 50; }
-        .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        .success-circle { position: absolute; width: 60px; height: 60px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: 0.5s var(--spring); }
-        .success-circle span { color: white; font-size: 35px; }
+        /* ЭФФЕКТЫ ЗАГРУЗКИ */
+        #global-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
+        .loader-ring { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
+        .success-circle { position: absolute; width: 70px; height: 70px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: 0.5s var(--spring); }
+        .success-circle span { font-size: 40px; color: white; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .fly-away { transform: translateY(-120vh) rotate(10deg) !important; opacity: 0 !important; transition: 1s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        /* АНИМАЦИЯ ВЫЛЕТА */
+        .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 1.2s cubic-bezier(0.45, 0, 0.55, 1) !important; }
 
         /* ТЕГИ */
-        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 20px; margin-top: 40px; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
         .tag-btn.active { background: var(--accent); color: #000; }
 
-        .tab-content { width: 100%; height: 100%; position: absolute; inset: 0; }
+        .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
     </style>
 </head>
 <body>
@@ -84,17 +81,23 @@
 
         <div id="tab-upload" class="tab-content hidden flex-center">
             <div class="tag-cloud" id="up-t-cloud"></div>
-            <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:380px; border: 2px dashed #222; border-radius: 30px; background:#080808">
-                <span class="material-symbols-rounded" style="font-size: 50px; color:#222">add_circle</span>
+            <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:400px; border:2px dashed #222; border-radius:25px; background:#080808">
+                <span class="material-symbols-rounded" style="font-size:50px; color:#222">add_circle</span>
+                <p style="font-size:10px; color:#444; font-weight:800; margin-top:15px">ВЫБРАТЬ ОБЪЕКТЫ</p>
                 <input type="file" id="fileIn" class="hidden" accept="image/*" multiple onchange="previewUpload(this)">
             </div>
             <div id="up-box" class="hidden flex-center">
                 <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
-                <button onclick="resetUpload()" style="margin-top:20px; background:none; border:none; color:#444; font-size:10px; font-weight:bold; letter-spacing:1px">ОТМЕНА</button>
+                <button onclick="resetUpload()" style="margin-top:20px; background:none; border:none; color:var(--gray); font-size:10px; font-weight:800">ОТМЕНА</button>
             </div>
         </div>
 
-        <div class="bottom-ui">
+        <div id="global-loader">
+            <div class="loader-ring" id="g-ring"></div>
+            <div class="success-circle" id="g-done"><span class="material-symbols-rounded">check</span></div>
+        </div>
+
+        <div class="nav-container">
             <div class="nav-pill">
                 <button class="nav-item active" onclick="switchTab('main', this)"><span class="material-symbols-rounded">grid_view</span><span>Склад</span></button>
                 <button class="nav-item" onclick="switchTab('tags', this)"><span class="material-symbols-rounded">style</span><span>Теги</span></button>
@@ -112,23 +115,23 @@
         const REPO = "cursorus/cards";
 
         let userPin = "", activeTab = 'main', sm, st, su;
-        let upQueue = [], selUpTags = new Set(), selFilterTags = new Set();
+        let upFiles = [], selUpTags = new Set(), selFilterTags = new Set();
 
         function press(n) {
             if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
             document.querySelectorAll('.dot').forEach((d, i) => d.className = i < userPin.length ? 'dot filled' : 'dot');
-            if(userPin.length === 4) setTimeout(validatePin, 200);
+            if(userPin.length === 4) setTimeout(validate, 200);
         }
 
-        function validatePin() {
+        function validate() {
             if(CryptoJS.SHA256(userPin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
-                initApp();
+                init();
             } else { userPin = ""; document.querySelectorAll('.dot').forEach(d => d.className = 'dot'); }
         }
 
-        function initApp() {
+        function init() {
             renderMain();
             const tags = ["ru", "en", ...Object.keys(TYPES || {})];
             tags.forEach(t => {
@@ -143,24 +146,22 @@
             if(FILES) FILES.forEach(f => { if(f.endsWith('.enc')) w.appendChild(createSlide(f)); });
             if(sm) sm.destroy();
             sm = new Swiper("#sw-main", { effect: "cards", grabCursor: true });
+            document.getElementById('sw-main').classList.add('active-view');
         }
 
         function createSlide(f, localData = null) {
-            const slide = document.createElement('div'); slide.className = 'swiper-slide';
-            slide.innerHTML = `<div class="status-layer"><div class="loader-ring"></div><div class="success-circle"><span class="material-symbols-rounded">check</span></div></div>`;
+            const d = document.createElement('div'); d.className = 'swiper-slide';
             const img = document.createElement('img');
-            
             if(localData) {
-                img.src = localData; img.classList.add('loaded'); slide.appendChild(img);
-                slide.querySelector('.loader-ring').classList.add('hidden');
+                img.src = localData; img.classList.add('loaded'); d.appendChild(img);
             } else {
                 fetch(`images/${f}`).then(r => r.text()).then(enc => {
                     img.src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
-                    img.onload = () => { img.classList.add('loaded'); slide.querySelector('.loader-ring').classList.add('hidden'); };
-                    slide.appendChild(img);
-                }).catch(() => slide.innerHTML = "Error");
+                    img.onload = () => img.classList.add('loaded');
+                    d.appendChild(img);
+                });
             }
-            return slide;
+            return d;
         }
 
         function toggleTag(t, el, set, isFilter) {
@@ -174,6 +175,7 @@
                 }
                 if(st) st.destroy();
                 st = new Swiper("#sw-tags", { effect: "cards" });
+                document.getElementById('sw-tags').classList.add('active-view');
             }
         }
 
@@ -189,61 +191,74 @@
             document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
             b.classList.add('active');
             document.getElementById('act-icon').innerText = t === 'upload' ? 'publish' : 'download';
-            if(t === 'main') sm.update();
+            
+            // Анимация появления карточек снизу
+            const activeSwiper = t === 'main' ? 'sw-main' : (t === 'tags' ? 'sw-tags' : 'sw-up');
+            const el = document.getElementById(activeSwiper);
+            if(el) { el.classList.remove('active-view'); setTimeout(() => el.classList.add('active-view'), 50); }
         }
 
         async function previewUpload(input) {
             if(!input.files.length) return;
-            upQueue = [];
+            upFiles = [];
             const w = document.getElementById('w-up'); w.innerHTML = '';
             for (let file of input.files) {
                 const data = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
-                upQueue.push(data);
+                upFiles.push(data);
                 w.appendChild(createSlide(null, data));
             }
             document.getElementById('up-box').classList.remove('hidden');
             document.getElementById('up-zone').classList.add('hidden');
             if(su) su.destroy();
             su = new Swiper("#sw-up", { effect: "cards" });
+            setTimeout(() => document.getElementById('sw-up').classList.add('active-view'), 50);
         }
 
         function resetUpload() {
-            upQueue = []; document.getElementById('up-box').classList.add('hidden');
+            upFiles = []; document.getElementById('up-box').classList.add('hidden');
             document.getElementById('up-zone').classList.remove('hidden');
         }
 
         async function handleAction() {
             if(activeTab === 'upload') {
-                if(!upQueue.length || !selUpTags.size) return alert("Выбери фото и теги");
+                if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
                 const token = prompt("GitHub Token:"); if(!token) return;
-                const slides = document.querySelectorAll('#w-up .swiper-slide');
-                const tagStr = Array.from(selUpTags).join('_');
 
-                for(let i = 0; i < upQueue.length; i++) {
-                    const slide = slides[i];
-                    slide.querySelector('.loader-ring').classList.remove('hidden');
-                    try {
-                        const enc = CryptoJS.AES.encrypt(upQueue[i], userPin).toString();
-                        const name = `${tagStr}_${Date.now()}_${i}.enc`;
-                        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
-                            method: 'PUT',
-                            headers: { 'Authorization': `token ${token}` },
-                            body: JSON.stringify({ message: "up", content: btoa(unescape(encodeURIComponent(enc))) })
-                        });
-                        if(res.ok) {
-                            slide.querySelector('.loader-ring').classList.add('hidden');
-                            slide.querySelector('.success-circle').style.transform = 'scale(1)';
-                            setTimeout(() => slide.classList.add('fly-away'), 400);
-                        }
-                    } catch(e) {}
-                }
-                setTimeout(() => location.reload(), 2000);
+                // 1. Анимация вылета всех карточек
+                const slides = document.querySelectorAll('#w-up .swiper-slide');
+                slides.forEach((s, i) => {
+                    setTimeout(() => s.classList.add('fly-away'), i * 100);
+                });
+
+                // 2. Появление загрузки ПОСЛЕ вылета
+                setTimeout(async () => {
+                    document.getElementById('g-ring').style.opacity = '1';
+                    const tagStr = Array.from(selUpTags).join('_');
+
+                    for(let i = 0; i < upFiles.length; i++) {
+                        try {
+                            const enc = CryptoJS.AES.encrypt(upFiles[i], userPin).toString();
+                            const name = `${tagStr}_${Date.now()}_${i}.enc`;
+                            await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
+                                method: 'PUT',
+                                headers: { 'Authorization': `token ${token}` },
+                                body: JSON.stringify({ message: "up", content: btoa(unescape(encodeURIComponent(enc))) })
+                            });
+                        } catch(e) {}
+                    }
+                    
+                    // 3. Завершение
+                    document.getElementById('g-ring').style.opacity = '0';
+                    document.getElementById('g-done').style.transform = 'scale(1)';
+                    setTimeout(() => location.reload(), 1500);
+                }, 800);
+
             } else {
                 const s = activeTab === 'main' ? sm : st;
                 if(!s || !s.slides[s.activeIndex]) return;
                 const a = document.createElement('a');
                 a.href = s.slides[s.activeIndex].querySelector('img').src;
-                a.download = "safe_v2.png"; a.click();
+                a.download = "safe_export.png"; a.click();
             }
         }
     </script>
