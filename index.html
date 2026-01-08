@@ -20,39 +20,44 @@
         .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
         .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.3); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
-        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
+        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 
-        /* НАВИГАЦИЯ (СТАРАЯ ПАНЕЛЬ + КНОПКА СПРАВА) */
+        /* НАВИГАЦИЯ */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
         .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
         .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.4s var(--spring); min-width: 60px; }
         .nav-item.active { color: var(--accent); background: #222; transform: scale(1.05); }
         .nav-item .material-symbols-rounded { font-size: 22px; }
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .fab { width: 60px; height: 60px; background: var(--accent); color: #000; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-        .fab { width: 60px; height: 60px; background: var(--accent); color: #000; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); cursor: pointer; }
-
-        /* СЛАЙДЕРЫ И КАРТОЧКИ */
-        .swiper { width: 310px; height: 440px; opacity: 0; transform: translateY(50px); transition: 0.8s var(--spring); }
-        .swiper.active-view { opacity: 1; transform: translateY(0); }
+        /* КАРТОЧКИ И АНИМАЦИИ */
+        .swiper { width: 310px; height: 440px; transition: 0.5s; }
         .swiper-slide { border-radius: 25px; background: #0f0f0f; overflow: hidden; border: 1px solid #111; position: relative; }
         .swiper-slide img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.5s; }
         .swiper-slide img.loaded { opacity: 1; }
 
-        /* ЭФФЕКТЫ ЗАГРУЗКИ */
-        #global-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
+        /* АНИМАЦИЯ ПОЯВЛЕНИЯ (СНИЗУ) */
+        .slide-in-bottom { animation: slideIn 0.6s var(--spring) forwards; }
+        @keyframes slideIn {
+            from { transform: translateY(100vh) rotate(10deg); opacity: 0; }
+            to { transform: translateY(0) rotate(0); opacity: 1; }
+        }
+
+        /* АНИМАЦИЯ ВЫЛЕТА (НАВЕРХ) */
+        .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 1s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+
+        /* ЗАГРУЗКА И ГАЛОЧКА */
+        #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
         .loader-ring { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
-        .success-circle { position: absolute; width: 70px; height: 70px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: 0.5s var(--spring); }
-        .success-circle span { font-size: 40px; color: white; }
+        .success-circle { position: absolute; width: 80px; height: 80px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: 0.6s var(--spring); }
+        .success-circle span { font-size: 45px; color: #fff; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* АНИМАЦИЯ ВЫЛЕТА */
-        .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 1.2s cubic-bezier(0.45, 0, 0.55, 1) !important; }
-
         /* ТЕГИ */
-        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
-        .tag-btn.active { background: var(--accent); color: #000; }
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; margin-bottom: 10px; }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; transition: 0.3s; }
+        .tag-btn.active { background: var(--accent); color: #000; transform: scale(1.1); }
 
         .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
     </style>
@@ -81,18 +86,18 @@
 
         <div id="tab-upload" class="tab-content hidden flex-center">
             <div class="tag-cloud" id="up-t-cloud"></div>
-            <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:400px; border:2px dashed #222; border-radius:25px; background:#080808">
-                <span class="material-symbols-rounded" style="font-size:50px; color:#222">add_circle</span>
-                <p style="font-size:10px; color:#444; font-weight:800; margin-top:15px">ВЫБРАТЬ ОБЪЕКТЫ</p>
+            <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:400px; border:2px dashed #222; border-radius:25px;">
+                <span class="material-symbols-rounded" style="font-size:50px; color:#222">add_photo_alternate</span>
+                <p style="font-size:10px; color:#444; font-weight:800; margin-top:15px; letter-spacing:1px">ВЫБРАТЬ ФАЙЛЫ</p>
                 <input type="file" id="fileIn" class="hidden" accept="image/*" multiple onchange="previewUpload(this)">
             </div>
             <div id="up-box" class="hidden flex-center">
                 <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
-                <button onclick="resetUpload()" style="margin-top:20px; background:none; border:none; color:var(--gray); font-size:10px; font-weight:800">ОТМЕНА</button>
+                <button onclick="resetUpload()" style="margin-top:20px; background:none; border:none; color:#555; font-size:10px; font-weight:800; letter-spacing:1px">ОТМЕНИТЬ</button>
             </div>
         </div>
 
-        <div id="global-loader">
+        <div id="global-status">
             <div class="loader-ring" id="g-ring"></div>
             <div class="success-circle" id="g-done"><span class="material-symbols-rounded">check</span></div>
         </div>
@@ -120,15 +125,13 @@
         function press(n) {
             if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
             document.querySelectorAll('.dot').forEach((d, i) => d.className = i < userPin.length ? 'dot filled' : 'dot');
-            if(userPin.length === 4) setTimeout(validate, 200);
-        }
-
-        function validate() {
-            if(CryptoJS.SHA256(userPin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                init();
-            } else { userPin = ""; document.querySelectorAll('.dot').forEach(d => d.className = 'dot'); }
+            if(userPin.length === 4) setTimeout(() => {
+                if(CryptoJS.SHA256(userPin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('app-screen').classList.remove('hidden');
+                    init();
+                } else { userPin = ""; document.querySelectorAll('.dot').forEach(d => d.className = 'dot'); }
+            }, 200);
         }
 
         function init() {
@@ -141,12 +144,10 @@
         }
 
         function renderMain() {
-            const w = document.getElementById('w-main');
-            w.innerHTML = '';
+            const w = document.getElementById('w-main'); w.innerHTML = '';
             if(FILES) FILES.forEach(f => { if(f.endsWith('.enc')) w.appendChild(createSlide(f)); });
             if(sm) sm.destroy();
             sm = new Swiper("#sw-main", { effect: "cards", grabCursor: true });
-            document.getElementById('sw-main').classList.add('active-view');
         }
 
         function createSlide(f, localData = null) {
@@ -167,15 +168,17 @@
         function toggleTag(t, el, set, isFilter) {
             if (set.has(t)) { set.delete(t); el.classList.remove('active'); } 
             else { set.add(t); el.classList.add('active'); }
+            
             if(isFilter) {
                 const w = document.getElementById('w-tag'); w.innerHTML = '';
                 const active = Array.from(selFilterTags);
-                if(active.length) {
-                    FILES.filter(f => active.every(tag => f.includes(tag))).forEach(f => w.appendChild(createSlide(f)));
+                if(active.length > 0) {
+                    // Исправленный фильтр: файл должен содержать ВСЕ выбранные теги
+                    const filtered = FILES.filter(f => active.every(tag => f.includes(tag)));
+                    filtered.forEach(f => w.appendChild(createSlide(f)));
+                    if(st) st.destroy();
+                    st = new Swiper("#sw-tags", { effect: "cards" });
                 }
-                if(st) st.destroy();
-                st = new Swiper("#sw-tags", { effect: "cards" });
-                document.getElementById('sw-tags').classList.add('active-view');
             }
         }
 
@@ -191,31 +194,31 @@
             document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
             b.classList.add('active');
             document.getElementById('act-icon').innerText = t === 'upload' ? 'publish' : 'download';
-            
-            // Анимация появления карточек снизу
-            const activeSwiper = t === 'main' ? 'sw-main' : (t === 'tags' ? 'sw-tags' : 'sw-up');
-            const el = document.getElementById(activeSwiper);
-            if(el) { el.classList.remove('active-view'); setTimeout(() => el.classList.add('active-view'), 50); }
         }
 
         async function previewUpload(input) {
             if(!input.files.length) return;
             upFiles = [];
             const w = document.getElementById('w-up'); w.innerHTML = '';
+            
+            // Прячем зону выбора и показываем Swiper
+            document.getElementById('up-zone').classList.add('hidden');
+            document.getElementById('up-box').classList.remove('hidden');
+            document.getElementById('sw-up').classList.add('slide-in-bottom');
+
             for (let file of input.files) {
                 const data = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
                 upFiles.push(data);
                 w.appendChild(createSlide(null, data));
             }
-            document.getElementById('up-box').classList.remove('hidden');
-            document.getElementById('up-zone').classList.add('hidden');
             if(su) su.destroy();
             su = new Swiper("#sw-up", { effect: "cards" });
-            setTimeout(() => document.getElementById('sw-up').classList.add('active-view'), 50);
         }
 
         function resetUpload() {
-            upFiles = []; document.getElementById('up-box').classList.add('hidden');
+            upFiles = []; 
+            document.getElementById('up-box').classList.add('hidden');
+            document.getElementById('sw-up').classList.remove('slide-in-bottom');
             document.getElementById('up-zone').classList.remove('hidden');
         }
 
@@ -224,17 +227,15 @@
                 if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
                 const token = prompt("GitHub Token:"); if(!token) return;
 
-                // 1. Анимация вылета всех карточек
-                const slides = document.querySelectorAll('#w-up .swiper-slide');
-                slides.forEach((s, i) => {
-                    setTimeout(() => s.classList.add('fly-away'), i * 100);
+                // 1. Улетают карточки
+                document.querySelectorAll('#w-up .swiper-slide').forEach((s, i) => {
+                    setTimeout(() => s.classList.add('fly-away'), i * 150);
                 });
 
-                // 2. Появление загрузки ПОСЛЕ вылета
+                // 2. Лоадер и процесс
                 setTimeout(async () => {
                     document.getElementById('g-ring').style.opacity = '1';
                     const tagStr = Array.from(selUpTags).join('_');
-
                     for(let i = 0; i < upFiles.length; i++) {
                         try {
                             const enc = CryptoJS.AES.encrypt(upFiles[i], userPin).toString();
@@ -246,19 +247,17 @@
                             });
                         } catch(e) {}
                     }
-                    
-                    // 3. Завершение
+                    // 3. Галочка
                     document.getElementById('g-ring').style.opacity = '0';
                     document.getElementById('g-done').style.transform = 'scale(1)';
                     setTimeout(() => location.reload(), 1500);
-                }, 800);
-
+                }, 1000);
             } else {
                 const s = activeTab === 'main' ? sm : st;
                 if(!s || !s.slides[s.activeIndex]) return;
                 const a = document.createElement('a');
                 a.href = s.slides[s.activeIndex].querySelector('img').src;
-                a.download = "safe_export.png"; a.click();
+                a.download = "vault_image.png"; a.click();
             }
         }
     </script>
