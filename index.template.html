@@ -8,19 +8,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
     <style>
-        :root { 
-            --bg: #050505; 
-            --accent: #fff; 
-            --pill: rgba(20,20,20,0.8); 
-            --gray: #555; 
-        }
+        :root { --bg: #050505; --accent: #fff; --pill: rgba(20,20,20,0.8); --gray: #555; }
         
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; }
         .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .hidden { display: none !important; }
 
-        /* ТВОИ ВКЛАДКИ */
+        /* ВЕРХНЯЯ ПАНЕЛЬ */
+        .top-bar { position: fixed; top: 20px; width: 100%; display: flex; justify-content: flex-end; padding-right: 25px; z-index: 150; box-sizing: border-box; }
+        .btn-zip { background: var(--pill); border: 1px solid #222; color: var(--accent); padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; backdrop-filter: blur(10px); cursor: pointer; }
+
+        /* ТВОИ ОРИГИНАЛЬНЫЯ ВКЛАДКИ */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
         .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
         .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
@@ -28,25 +29,10 @@
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .fab { width: 70px; height: 70px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; }
 
-        /* КАРТОЧКИ С ЭФФЕКТОМ РАСТЯГИВАНИЯ */
-        .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
-        .swiper-slide { 
-            border-radius: 35px; background: #000; overflow: hidden; 
-            display: flex; align-items: center; justify-content: center;
-            will-change: transform; transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        
-        /* Главный секрет: картинка всегда на всю высоту, чтобы "растянуть" края */
-        .main-img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; /* Растягивает верх/низ/бока, заполняя пустоты */
-            opacity: 0; 
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            display: block;
-        }
+        /* КАРТОЧКИ */
+        .swiper { width: 310px; height: 440px; perspective: 1200px; }
+        .swiper-slide { border-radius: 35px; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; will-change: transform; transform: translateZ(0); }
+        .main-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
         .main-img.loaded { opacity: 1; }
 
         /* ПИН-ЭКРАН */
@@ -80,6 +66,13 @@
     </div>
 
     <div id="app-screen" class="hidden">
+        <div class="top-bar">
+            <button class="btn-zip" onclick="downloadAllAsZip()">
+                <span class="material-symbols-rounded" style="font-size:18px">folder_zip</span>
+                ZIP ALL
+            </button>
+        </div>
+
         <div id="tab-main" class="tab-content flex-center">
             <div class="swiper" id="sw-main"><div class="swiper-wrapper" id="w-main"></div></div>
         </div>
@@ -98,7 +91,9 @@
                 <button onclick="resetUpload()" style="margin-top:20px; color:#555; font-size:10px; font-weight:800; background:none; border:none;">ОТМЕНИТЬ</button>
             </div>
         </div>
+
         <div id="global-status"><div class="loader-ring" id="g-ring"></div></div>
+        
         <div class="nav-container">
             <div class="nav-pill">
                 <button class="nav-item active" onclick="switchTab('main', this)"><span class="material-symbols-rounded">grid_view</span><span>Склад</span></button>
@@ -116,13 +111,7 @@
         const REPO = "cursorus/cards";
         let userPin = "", activeTab = 'main', sm, st, su, fileCache = new Map();
 
-        const swConf = { 
-            effect: "cards",
-            grabCursor: true,
-            speed: 450,
-            resistanceRatio: 0,
-            cardsEffect: { slideShadows: false, rotate: true }
-        };
+        const swConf = { effect: "cards", speed: 400, resistanceRatio: 0, cardsEffect: { slideShadows: false, rotate: true } };
 
         function press(n) {
             if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
@@ -150,19 +139,18 @@
                 const r = await fetch(`images/${f}`);
                 const enc = await r.text();
                 const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
-                const i = new Image();
-                return new Promise(res => {
-                    i.onload = () => { fileCache.set(f, src); res(src); };
-                    i.src = src;
-                });
+                fileCache.set(f, src);
+                return src;
             } catch(e) { return ''; }
         }
 
         async function renderMain() {
             const w = document.getElementById('w-main'); w.innerHTML = '';
             document.getElementById('g-ring').style.opacity = '1';
-            const res = await Promise.all(FILES.filter(f => f.endsWith('.enc')).map(f => getFileMetadata(f).then(src => ({name: f, src}))));
-            res.forEach(item => w.appendChild(createSlide(item.src)));
+            for(let f of FILES.filter(x => x.endsWith('.enc'))) {
+                const src = await getFileMetadata(f);
+                if(src) w.appendChild(createSlide(src));
+            }
             document.getElementById('g-ring').style.opacity = '0';
             if(sm) sm.destroy(); sm = new Swiper("#sw-main", swConf);
         }
@@ -170,10 +158,32 @@
         function createSlide(src) {
             const slide = document.createElement('div'); slide.className = 'swiper-slide';
             const img = document.createElement('img'); img.className = 'main-img';
-            img.src = src;
-            img.onload = () => img.classList.add('loaded');
+            img.src = src; img.onload = () => img.classList.add('loaded');
             slide.appendChild(img);
             return slide;
+        }
+
+        async function downloadAllAsZip() {
+            const zip = new JSZip();
+            const ring = document.getElementById('g-ring');
+            ring.style.opacity = '1';
+            
+            // Собираем картинки из текущего кеша (то что загружено на экран)
+            let count = 0;
+            fileCache.forEach((src, filename) => {
+                const base64Data = src.split(',')[1];
+                zip.file(`card_${count}.png`, base64Data, {base64: true});
+                count++;
+            });
+
+            if(count === 0) { alert("Нечего скачивать"); ring.style.opacity = '0'; return; }
+
+            const content = await zip.generateAsync({type:"blob"});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `cards_archive_${Date.now()}.zip`;
+            link.click();
+            ring.style.opacity = '0';
         }
 
         function switchTab(t, b) {
@@ -193,8 +203,10 @@
                 const active = Array.from(selFilterTags);
                 if(active.length) {
                     document.getElementById('g-ring').style.opacity = '1';
-                    const res = await Promise.all(FILES.filter(f => active.every(tag => f.includes(tag))).map(f => getFileMetadata(f).then(src => ({name: f, src}))));
-                    res.forEach(item => w.appendChild(createSlide(item.src)));
+                    for(let f of FILES.filter(f => active.every(tag => f.includes(tag)))) {
+                        const src = await getFileMetadata(f);
+                        if(src) w.appendChild(createSlide(src));
+                    }
                     document.getElementById('g-ring').style.opacity = '0';
                     if(st) st.destroy(); st = new Swiper("#sw-tags", swConf);
                 }
