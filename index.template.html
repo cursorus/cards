@@ -20,42 +20,50 @@
         .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .hidden { display: none !important; }
 
-        /* НАВИГАЦИЯ - ВОЗВРАЩЕНА ПОЛНОСТЬЮ */
+        /* НАВИГАЦИЯ */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
         .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
-        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.4s; min-width: 60px; }
-        .nav-item.active { color: var(--accent); background: #222; transform: scale(1.05); }
-        .nav-item .material-symbols-rounded { font-size: 22px; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
+        .nav-item.active { color: var(--accent); background: #222; }
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .fab { width: 70px; height: 70px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-        /* КАРТОЧКИ - БЕЗ ОТСТУПОВ */
+        /* КАРТОЧКИ */
         .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
         .swiper-slide { 
             border-radius: 35px; background: #000; overflow: hidden; 
             display: flex; align-items: center; justify-content: center;
             will-change: transform, opacity; transform: translateZ(0);
-            transition: opacity 0.3s ease;
+            /* Плавный переход прозрачности при смене состояния */
+            transition: opacity 0.4s ease-in-out, transform 0.5s ease;
+            opacity: 0; /* По умолчанию скрыты */
         }
         
+        /* Видимы только активная и пара следующих в стеке */
+        .swiper-slide-active { opacity: 1 !important; z-index: 10; }
+        .swiper-slide-next, 
+        .swiper-slide-next + .swiper-slide { opacity: 1 !important; }
+
+        /* Когда карточка уходит "назад" (предыдущие), она затухает */
+        .swiper-slide-prev { opacity: 0 !important; }
+
         .mirror-bg { 
             position: absolute; inset: 0; width: 100%; height: 100%; 
             object-fit: cover; z-index: 1; opacity: 0.4; 
             filter: blur(15px) brightness(0.5); 
-            transform: scale(1.1); display: none;
+            transform: scale(1.15); display: none; pointer-events: none;
         }
         
         .main-img { 
             position: relative; z-index: 2; opacity: 0; 
-            transition: opacity 0.4s ease;
+            transition: opacity 0.3s ease;
             max-width: 100%; max-height: 100%; 
             pointer-events: none;
         }
         .main-img.loaded { opacity: 1; }
         
-        /* Квадратные/Горизонтальные без закруглений и теней */
         .is-vertical { width: 100%; height: 100%; object-fit: cover; }
-        .is-horizontal { width: 100%; height: auto; object-fit: contain; border-radius: 0; box-shadow: none; }
+        .is-horizontal { width: 100%; height: auto; object-fit: contain; border-radius: 0; }
 
         /* ПИН-ЭКРАН */
         #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
@@ -127,25 +135,11 @@
         const swConf = { 
             effect: "cards",
             grabCursor: true,
-            speed: 500,
-            rewind: true, // Возвращает к началу, не давая тянуть в пустоту
-            resistance: false, 
+            speed: 600,
+            rewind: false, 
+            resistanceRatio: 0, // Запрет на растягивание краев
             touchMoveStopPropagation: true,
-            cardsEffect: { slideShadows: false, rotate: true },
-            on: {
-                touchMove: function() {
-                    // Плавное затухание активной карты при свайпе
-                    const progress = Math.abs(this.touches.diff);
-                    const opacity = 1 - (progress / 300);
-                    if(this.slides[this.activeIndex]) {
-                        this.slides[this.activeIndex].style.opacity = Math.max(opacity, 0.1);
-                    }
-                },
-                transitionEnd: function() {
-                    // Возвращаем видимость после перехода
-                    this.slides.forEach(s => s.style.opacity = 1);
-                }
-            }
+            cardsEffect: { slideShadows: false, rotate: true }
         };
 
         function press(n) {
