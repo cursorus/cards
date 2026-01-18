@@ -14,7 +14,6 @@
             --accent: #fff; 
             --pill: rgba(20,20,20,0.8); 
             --gray: #555; 
-            --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; }
@@ -24,37 +23,31 @@
         /* ТВОИ ВКЛАДКИ */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
         .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
-        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.4s var(--spring); min-width: 60px; }
-        .nav-item.active { color: var(--accent); background: #222; transform: scale(1.05); }
-        .nav-item .material-symbols-rounded { font-size: 22px; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
+        .nav-item.active { color: var(--accent); background: #222; }
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
-        .fab { width: 70px; height: 70px; background: var(--pill); color: #555; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .fab { width: 70px; height: 70px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; }
 
-        /* КАРТОЧКИ - БЕЗ БЛЮРА, С РАСТЯЖЕНИЕМ */
-        .swiper { width: 310px; height: 440px; perspective: 1200px; }
+        /* КАРТОЧКИ С ЭФФЕКТОМ РАСТЯГИВАНИЯ */
+        .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
         .swiper-slide { 
             border-radius: 35px; background: #000; overflow: hidden; 
-            position: relative; display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             will-change: transform; transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
-        /* Фон растягивается на всю карточку без блюра */
-        .mirror-bg { 
-            position: absolute; inset: 0; width: 100%; height: 100%; 
-            object-fit: cover; z-index: 1; opacity: 0.35; 
-            filter: brightness(0.4); /* Только притемнение для читаемости */
-            display: none; pointer-events: none;
-        }
-        
+        /* Главный секрет: картинка всегда на всю высоту, чтобы "растянуть" края */
         .main-img { 
-            position: relative; z-index: 2; opacity: 0; 
-            transition: opacity 0.4s ease; max-width: 100%; max-height: 100%; 
-            pointer-events: none; border-radius: 0;
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; /* Растягивает верх/низ/бока, заполняя пустоты */
+            opacity: 0; 
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            display: block;
         }
         .main-img.loaded { opacity: 1; }
-        
-        .is-vertical { width: 100%; height: 100%; object-fit: cover; }
-        .is-horizontal { width: 100%; height: auto; object-fit: contain; }
 
         /* ПИН-ЭКРАН */
         #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
@@ -62,17 +55,16 @@
         .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
         .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
-        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; -webkit-tap-highlight-color: transparent; }
+        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 
         .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; transition: 0.3s; }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .tag-btn.active { background: var(--accent); color: #000; }
 
         .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
         .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important; }
     </style>
 </head>
 <body>
@@ -103,7 +95,7 @@
             </div>
             <div id="up-box" class="hidden flex-center">
                 <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
-                <button onclick="resetUpload()" style="margin-top:20px; color:#555; background:none; border:none; font-size:10px; font-weight:800;">ОТМЕНИТЬ</button>
+                <button onclick="resetUpload()" style="margin-top:20px; color:#555; font-size:10px; font-weight:800; background:none; border:none;">ОТМЕНИТЬ</button>
             </div>
         </div>
         <div id="global-status"><div class="loader-ring" id="g-ring"></div></div>
@@ -127,7 +119,7 @@
         const swConf = { 
             effect: "cards",
             grabCursor: true,
-            speed: 500,
+            speed: 450,
             resistanceRatio: 0,
             cardsEffect: { slideShadows: false, rotate: true }
         };
@@ -158,42 +150,29 @@
                 const r = await fetch(`images/${f}`);
                 const enc = await r.text();
                 const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
+                const i = new Image();
                 return new Promise(res => {
-                    const i = new Image();
-                    i.onload = () => {
-                        const aspect = i.naturalHeight / i.naturalWidth;
-                        const meta = { src, rank: aspect > 1.2 ? 1 : (aspect < 0.8 ? 3 : 2) };
-                        fileCache.set(f, meta); res(meta);
-                    };
+                    i.onload = () => { fileCache.set(f, src); res(src); };
                     i.src = src;
                 });
-            } catch(e) { return {src: '', rank: 4}; }
+            } catch(e) { return ''; }
         }
 
         async function renderMain() {
             const w = document.getElementById('w-main'); w.innerHTML = '';
             document.getElementById('g-ring').style.opacity = '1';
-            const res = await Promise.all(FILES.filter(f => f.endsWith('.enc')).map(f => getFileMetadata(f).then(m => ({name: f, ...m}))));
-            res.sort((a, b) => a.rank - b.rank).forEach(item => w.appendChild(createSlide(item.name, item.src)));
+            const res = await Promise.all(FILES.filter(f => f.endsWith('.enc')).map(f => getFileMetadata(f).then(src => ({name: f, src}))));
+            res.forEach(item => w.appendChild(createSlide(item.src)));
             document.getElementById('g-ring').style.opacity = '0';
             if(sm) sm.destroy(); sm = new Swiper("#sw-main", swConf);
         }
 
-        function createSlide(f, localData = null) {
+        function createSlide(src) {
             const slide = document.createElement('div'); slide.className = 'swiper-slide';
-            const bg = document.createElement('img'); bg.className = 'mirror-bg';
             const img = document.createElement('img'); img.className = 'main-img';
-            slide.append(bg, img);
-            const apply = (src) => {
-                img.src = src; bg.src = src;
-                img.onload = () => {
-                    const aspect = img.naturalHeight / img.naturalWidth;
-                    if(aspect > 1.2) img.classList.add('is-vertical');
-                    else { img.classList.add('is-horizontal'); bg.style.display = 'block'; }
-                    img.classList.add('loaded');
-                };
-            };
-            if(localData) apply(localData); else getFileMetadata(f).then(m => apply(m.src));
+            img.src = src;
+            img.onload = () => img.classList.add('loaded');
+            slide.appendChild(img);
             return slide;
         }
 
@@ -214,8 +193,8 @@
                 const active = Array.from(selFilterTags);
                 if(active.length) {
                     document.getElementById('g-ring').style.opacity = '1';
-                    const res = await Promise.all(FILES.filter(f => active.every(tag => f.includes(tag))).map(f => getFileMetadata(f).then(m => ({name: f, ...m}))));
-                    res.sort((a, b) => a.rank - b.rank).forEach(item => w.appendChild(createSlide(item.name, item.src)));
+                    const res = await Promise.all(FILES.filter(f => active.every(tag => f.includes(tag))).map(f => getFileMetadata(f).then(src => ({name: f, src}))));
+                    res.forEach(item => w.appendChild(createSlide(item.src)));
                     document.getElementById('g-ring').style.opacity = '0';
                     if(st) st.destroy(); st = new Swiper("#sw-tags", swConf);
                 }
@@ -234,7 +213,7 @@
             document.getElementById('up-box').classList.remove('hidden');
             for (let file of input.files) {
                 const data = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
-                upFiles.push(data); w.appendChild(createSlide(null, data));
+                upFiles.push(data); w.appendChild(createSlide(data));
             }
             if(su) su.destroy(); su = new Swiper("#sw-up", swConf);
         }
@@ -248,20 +227,17 @@
             if(activeTab === 'upload') {
                 if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
                 const token = prompt("GitHub Token:"); if(!token) return;
-                document.querySelectorAll('#w-up .swiper-slide').forEach((s, i) => setTimeout(() => s.classList.add('fly-away'), i * 80));
-                setTimeout(async () => {
-                    document.getElementById('g-ring').style.opacity = '1';
-                    const tagStr = Array.from(selUpTags).join('_');
-                    for(let i = 0; i < upFiles.length; i++) {
-                        const enc = CryptoJS.AES.encrypt(upFiles[i], userPin).toString();
-                        const name = `${tagStr}_${Date.now()}_${i}.enc`;
-                        await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
-                            method: 'PUT', headers: { 'Authorization': `token ${token}` },
-                            body: JSON.stringify({ message: "up", content: btoa(unescape(encodeURIComponent(enc))) })
-                        });
-                    }
-                    location.reload();
-                }, 600);
+                document.getElementById('g-ring').style.opacity = '1';
+                const tagStr = Array.from(selUpTags).join('_');
+                for(let i = 0; i < upFiles.length; i++) {
+                    const enc = CryptoJS.AES.encrypt(upFiles[i], userPin).toString();
+                    const name = `${tagStr}_${Date.now()}_${i}.enc`;
+                    await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
+                        method: 'PUT', headers: { 'Authorization': `token ${token}` },
+                        body: JSON.stringify({ message: "up", content: btoa(unescape(encodeURIComponent(enc))) })
+                    });
+                }
+                location.reload();
             } else {
                 const s = activeTab === 'main' ? sm : st;
                 if(!s || !s.slides[s.activeIndex]) return;
