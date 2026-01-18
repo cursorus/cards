@@ -14,54 +14,48 @@
             --accent: #fff; 
             --pill: rgba(20,20,20,0.8); 
             --gray: #555; 
-            --spring: cubic-bezier(0.175, 0.885, 0.32, 1.1); 
         }
         
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; }
         .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .hidden { display: none !important; }
 
-        /* НАВИГАЦИЯ - ТВОЯ ОРИГИНАЛЬНАЯ */
+        /* НАВИГАЦИЯ - ВОЗВРАЩЕНА ПОЛНОСТЬЮ */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
         .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
-        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
-        .nav-item.active { color: var(--accent); background: #222; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.4s; min-width: 60px; }
+        .nav-item.active { color: var(--accent); background: #222; transform: scale(1.05); }
+        .nav-item .material-symbols-rounded { font-size: 22px; }
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .fab { width: 70px; height: 70px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-        /* КАРТОЧКИ - ФИКС ДЕРГАНИЯ */
-        .swiper { width: 310px; height: 440px; perspective: 1000px; contain: layout style; }
+        /* КАРТОЧКИ - БЕЗ ОТСТУПОВ */
+        .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
         .swiper-slide { 
             border-radius: 35px; background: #000; overflow: hidden; 
-            position: relative; display: flex; align-items: center; justify-content: center;
-            will-change: transform; transform: translateZ(0);
+            display: flex; align-items: center; justify-content: center;
+            will-change: transform, opacity; transform: translateZ(0);
+            transition: opacity 0.3s ease;
         }
         
-        /* ГИБРИДНЫЙ ФОН */
         .mirror-bg { 
-            position: absolute; 
-            inset: -10%; 
-            width: 120%; 
-            height: 120%; 
-            object-fit: cover; 
-            z-index: 1; 
-            opacity: 0.4; 
-            filter: blur(12px) brightness(0.5) saturate(1.4);
-            transform: translateZ(0);
-            display: none;
-            pointer-events: none;
+            position: absolute; inset: 0; width: 100%; height: 100%; 
+            object-fit: cover; z-index: 1; opacity: 0.4; 
+            filter: blur(15px) brightness(0.5); 
+            transform: scale(1.1); display: none;
         }
         
         .main-img { 
             position: relative; z-index: 2; opacity: 0; 
-            transition: opacity 0.4s ease; max-width: 100%; max-height: 100%; 
-            pointer-events: none; will-change: transform;
-            transform: translateZ(0);
+            transition: opacity 0.4s ease;
+            max-width: 100%; max-height: 100%; 
+            pointer-events: none;
         }
         .main-img.loaded { opacity: 1; }
         
+        /* Квадратные/Горизонтальные без закруглений и теней */
         .is-vertical { width: 100%; height: 100%; object-fit: cover; }
-        .is-horizontal { width: 92%; height: auto; object-fit: contain; border-radius: 14px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); }
+        .is-horizontal { width: 100%; height: auto; object-fit: contain; border-radius: 0; box-shadow: none; }
 
         /* ПИН-ЭКРАН */
         #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
@@ -69,15 +63,13 @@
         .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
         .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
-        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; -webkit-tap-highlight-color: transparent; }
+        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 
         .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; transition: 0.3s; }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .tag-btn.active { background: var(--accent); color: #000; }
         
         .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-        .fly-away { transform: translateY(-120vh) rotate(-10deg) !important; opacity: 0 !important; transition: 0.6s ease-in !important; }
-        
         #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
         .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -111,7 +103,7 @@
             </div>
             <div id="up-box" class="hidden flex-center">
                 <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
-                <button onclick="resetUpload()" style="margin-top:20px; color:#555; font-size:10px; font-weight:800; background:none; border:none;">ОТМЕНИТЬ</button>
+                <button onclick="resetUpload()" style="margin-top:20px; color:#555; background:none; border:none; font-size:10px; font-weight:800;">ОТМЕНИТЬ</button>
             </div>
         </div>
         <div id="global-status"><div class="loader-ring" id="g-ring"></div></div>
@@ -130,24 +122,30 @@
         const PIN_HASH = "__PIN_HASH__";
         const FILES = __ALL_FILES__;
         const REPO = "cursorus/cards";
+        let userPin = "", activeTab = 'main', sm, st, su, fileCache = new Map();
 
-        let userPin = "", activeTab = 'main', sm, st, su;
-        let fileCache = new Map();
-
-        // Оптимизированный конфиг Swiper против лагов
         const swConf = { 
             effect: "cards",
             grabCursor: true,
-            perSlideOffset: 10,
-            perSlideRotate: 2,
-            speed: 500, // Плавность анимации
-            touchAngle: 45, // Чтобы случайные движения не дергали карты
-            longSwipesMs: 300, 
-            followFinger: true,
-            resistanceRatio: 0.5,
+            speed: 500,
+            rewind: true, // Возвращает к началу, не давая тянуть в пустоту
+            resistance: false, 
             touchMoveStopPropagation: true,
-            slideShadows: false, // Тени Swiper - главная причина лагов
-            cardsEffect: { slideShadows: false, rotate: true }
+            cardsEffect: { slideShadows: false, rotate: true },
+            on: {
+                touchMove: function() {
+                    // Плавное затухание активной карты при свайпе
+                    const progress = Math.abs(this.touches.diff);
+                    const opacity = 1 - (progress / 300);
+                    if(this.slides[this.activeIndex]) {
+                        this.slides[this.activeIndex].style.opacity = Math.max(opacity, 0.1);
+                    }
+                },
+                transitionEnd: function() {
+                    // Возвращаем видимость после перехода
+                    this.slides.forEach(s => s.style.opacity = 1);
+                }
+            }
         };
 
         function press(n) {
@@ -164,8 +162,7 @@
 
         function init() {
             renderMain();
-            const tags = ["ru", "en", "art", "work", "memes"];
-            tags.forEach(t => {
+            ["ru", "en", "art", "work", "memes"].forEach(t => {
                 createTagBtn(t, 't-cloud', (e) => toggleTag(t, e.target, selFilterTags, true));
                 createTagBtn(t, 'up-t-cloud', (e) => toggleTag(t, e.target, selUpTags, false));
             });
@@ -192,8 +189,8 @@
         async function renderMain() {
             const w = document.getElementById('w-main'); w.innerHTML = '';
             document.getElementById('g-ring').style.opacity = '1';
-            const results = await Promise.all(FILES.filter(f => f.endsWith('.enc')).map(f => getFileMetadata(f).then(m => ({name: f, ...m}))));
-            results.sort((a, b) => a.rank - b.rank).forEach(item => w.appendChild(createSlide(item.name, item.src)));
+            const res = await Promise.all(FILES.filter(f => f.endsWith('.enc')).map(f => getFileMetadata(f).then(m => ({name: f, ...m}))));
+            res.sort((a, b) => a.rank - b.rank).forEach(item => w.appendChild(createSlide(item.name, item.src)));
             document.getElementById('g-ring').style.opacity = '0';
             if(sm) sm.destroy(); sm = new Swiper("#sw-main", swConf);
         }
@@ -223,8 +220,7 @@
             b.classList.add('active');
             document.getElementById('act-icon').innerText = t === 'upload' ? 'publish' : 'download';
         }
-        
-        // Остальные функции (toggleTag, handleAction, и т.д.) остаются без изменений
+
         let upFiles = [], selUpTags = new Set(), selFilterTags = new Set();
         async function toggleTag(t, el, set, isFilter) {
             set.has(t) ? (set.delete(t), el.classList.remove('active')) : (set.add(t), el.classList.add('active'));
@@ -240,10 +236,12 @@
                 }
             }
         }
+
         function createTagBtn(t, cont, fn) {
             const b = document.createElement('button'); b.className = 'tag-btn'; b.innerText = t.toUpperCase();
             b.onclick = fn; document.getElementById(cont).appendChild(b);
         }
+
         async function previewUpload(input) {
             if(!input.files.length) return;
             upFiles = []; const w = document.getElementById('w-up'); w.innerHTML = '';
@@ -255,10 +253,12 @@
             }
             if(su) su.destroy(); su = new Swiper("#sw-up", swConf);
         }
+
         function resetUpload() {
             upFiles = []; document.getElementById('up-box').classList.add('hidden');
             document.getElementById('up-zone').classList.remove('hidden');
         }
+
         async function handleAction() {
             if(activeTab === 'upload') {
                 if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
