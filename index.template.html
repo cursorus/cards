@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Карточки</title>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
@@ -18,48 +18,52 @@
 }
 
 html,body{
-  margin:0;
-  height:100%;
-  background:var(--bg);
-  color:#fff;
+  margin:0;height:100%;
+  background:var(--bg);color:#fff;
   font-family:-apple-system,sans-serif;
   overflow:hidden;
 }
 
-.flex-center{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  height:100%;
-}
-
 .hidden{display:none!important}
+.flex-center{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column}
 
-/* AUTH */
-#auth-screen{position:fixed;inset:0;z-index:1000;background:var(--bg)}
-.pin-dots{display:flex;gap:14px;margin-bottom:35px}
-.dot{width:14px;height:14px;border:2px solid #333;border-radius:50%}
-.dot.filled{background:#fff;border-color:#fff}
-.keypad{display:grid;grid-template-columns:repeat(3,75px);gap:14px}
-.key{
-  width:75px;height:75px;border-radius:50%;
-  background:#111;display:flex;align-items:center;justify-content:center;
-  font-size:22px
+/* ===== MODE SWITCH ===== */
+.mode-switch{
+  position:fixed;
+  top:20px;
+  z-index:200;
+  background:var(--pill);
+  border-radius:30px;
+  padding:6px;
+  display:flex;
+  gap:6px;
+}
+.mode-btn{
+  border:none;
+  background:none;
+  color:#666;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:800;
+}
+.mode-btn.active{
+  background:#222;
+  color:#fff;
 }
 
-/* SWIPER */
-.swiper{width:310px;height:440px}
+/* ===== SWIPER ===== */
+.swiper{width:310px;height:440px;transform:translateZ(0)}
 .swiper-slide{
-  border-radius:35px;
   background:#000;
+  border-radius:35px;
   overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-/* FAKE BACKGROUND (NO BLUR) */
+/* FAKE BG (NO BLUR) */
 .fake-bg{
   position:absolute;
   inset:0;
@@ -71,14 +75,12 @@ html,body{
 
 /* IMAGE */
 .main-img{
-  position:relative;
   z-index:2;
   max-width:100%;
   max-height:100%;
   opacity:0;
   transition:opacity .25s ease-out;
 }
-
 .main-img.loaded{opacity:1}
 .is-vertical{width:100%;height:100%;object-fit:cover}
 .is-horizontal{width:94%;height:auto;border-radius:16px}
@@ -91,114 +93,58 @@ html,body{
   display:flex;
   justify-content:center;
   gap:15px;
-  z-index:50;
 }
-
 .nav-pill{
   background:var(--pill);
-  backdrop-filter:blur(18px);
   padding:8px;
   border-radius:40px;
   display:flex;
 }
-
 .nav-item{
-  background:none;
-  border:none;
+  background:none;border:none;
   color:var(--gray);
   padding:8px 15px;
   border-radius:30px;
 }
-
-.nav-item.active{
-  color:#fff;
-  background:#222;
-}
-
-.fab{
-  width:70px;height:70px;border-radius:50%;
-  background:var(--pill);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+.nav-item.active{color:#fff;background:#222}
 </style>
 </head>
 
 <body>
 
-<div id="auth-screen" class="flex-center">
-  <div class="pin-dots">
-    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  </div>
-  <div class="keypad">
-    <div class="key" onclick="press(1)">1</div>
-    <div class="key" onclick="press(2)">2</div>
-    <div class="key" onclick="press(3)">3</div>
-    <div class="key" onclick="press(4)">4</div>
-    <div class="key" onclick="press(5)">5</div>
-    <div class="key" onclick="press(6)">6</div>
-    <div class="key" onclick="press(7)">7</div>
-    <div class="key" onclick="press(8)">8</div>
-    <div class="key" onclick="press(9)">9</div>
-    <div></div>
-    <div class="key" onclick="press(0)">0</div>
-    <div class="key" onclick="press('C')">×</div>
-  </div>
+<!-- MODE SWITCH -->
+<div class="mode-switch">
+  <button class="mode-btn active" onclick="setMode('cards',this)">CARDS</button>
+  <button class="mode-btn" onclick="setMode('vertical',this)">VERTICAL</button>
 </div>
 
-<div id="app-screen" class="hidden flex-center">
+<div class="flex-center">
   <div class="swiper" id="sw-main">
     <div class="swiper-wrapper" id="w-main"></div>
   </div>
 </div>
 
-<div class="nav-container hidden" id="nav">
+<div class="nav-container">
   <div class="nav-pill">
     <button class="nav-item active">Склад</button>
-  </div>
-  <div class="fab">
-    <span class="material-symbols-rounded">download</span>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
 <script>
-const PIN_HASH="__PIN_HASH__";
-const FILES=__ALL_FILES__;
+const FILES = __ALL_FILES__;
+const PIN = "__PIN__"; // ты подставляешь свой
+let swiper, MODE = 'cards';
 
-let pin="",swiper;
-
-function press(n){
-  if(n==='C') pin="";
-  else if(pin.length<4) pin+=n;
-
-  document.querySelectorAll('.dot').forEach((d,i)=>{
-    d.className=i<pin.length?'dot filled':'dot';
-  });
-
-  if(pin.length===4){
-    setTimeout(()=>{
-      if(CryptoJS.SHA256(pin).toString()===PIN_HASH.replace(/['"]/g,'')){
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
-        document.getElementById('nav').classList.remove('hidden');
-        init();
-      } else {
-        pin="";
-        document.querySelectorAll('.dot').forEach(d=>d.className='dot');
-      }
-    },150);
-  }
+/* ===== DECRYPT ===== */
+async function getSrc(f){
+  const r = await fetch(`images/${f}`);
+  const enc = await r.text();
+  return CryptoJS.AES.decrypt(enc,PIN).toString(CryptoJS.enc.Utf8);
 }
 
-async function decrypt(f){
-  const r=await fetch(`images/${f}`);
-  const enc=await r.text();
-  return CryptoJS.AES.decrypt(enc,pin).toString(CryptoJS.enc.Utf8);
-}
-
+/* ===== SLIDE ===== */
 function createSlide(src){
   const s=document.createElement('div');
   s.className='swiper-slide';
@@ -208,6 +154,8 @@ function createSlide(src){
 
   const img=document.createElement('img');
   img.className='main-img';
+  img.decoding='async';
+  img.loading='eager';
 
   img.onload=()=>{
     const a=img.naturalHeight/img.naturalWidth;
@@ -221,24 +169,43 @@ function createSlide(src){
   return s;
 }
 
+/* ===== INIT ===== */
 async function init(){
   const w=document.getElementById('w-main');
+  w.innerHTML='';
   for(const f of FILES){
     if(!f.endsWith('.enc')) continue;
-    const src=await decrypt(f);
+    const src=await getSrc(f);
     w.appendChild(createSlide(src));
   }
+  initSwiper();
+}
 
-  swiper=new Swiper('#sw-main',{
-    effect:'creative',
-    speed:280,
-    resistanceRatio:.85,
-    creativeEffect:{
-      prev:{translate:[0,0,-120],scale:.95},
-      next:{translate:[0,'100%',0]}
+/* ===== SWIPER MODES ===== */
+function initSwiper(){
+  if(swiper) swiper.destroy(true,true);
+
+  swiper = new Swiper('#sw-main',{
+    direction: MODE === 'vertical' ? 'vertical' : 'horizontal',
+    effect: MODE === 'cards' ? 'cards' : 'slide',
+    speed: MODE === 'cards' ? 260 : 220,
+    resistanceRatio: .85,
+    cardsEffect:{
+      rotate:false,
+      slideShadows:false
     }
   });
 }
+
+/* ===== MODE SWITCH ===== */
+function setMode(m,btn){
+  MODE=m;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  initSwiper();
+}
+
+init();
 </script>
 
 </body>
