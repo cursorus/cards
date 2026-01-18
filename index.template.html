@@ -1,247 +1,245 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Карточки Pro</title>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <style>
-        :root { --bg: #050505; --accent: #fff; --pill: rgba(20,20,20,0.8); --gray: #555; }
-        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; }
-        .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
-        .hidden { display: none !important; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Карточки</title>
 
-        /* ПИН-ЭКРАН */
-        #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
-        .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
-        .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
-        .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
-        .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
-        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; -webkit-tap-highlight-color: transparent; }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-        /* НАВИГАЦИЯ */
-        .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
-        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
-        .nav-item.active { color: var(--accent); background: #222; }
-        .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+<style>
+:root {
+  --bg:#050505;
+  --pill:rgba(20,20,20,.8);
+  --accent:#fff;
+  --gray:#555;
+}
 
-        /* СУПЕР-ОПТИМИЗИРОВАННЫЕ КАРТОЧКИ */
-        .swiper { width: 320px; height: 460px; }
-        .swiper-slide { 
-            border-radius: 35px; background: #111; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-            /* Принудительный вынос на GPU */
-            transform: translateZ(0); 
-            will-change: transform;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-        }
-        
-        /* Фон теперь не пересчитывается постоянно */
-        .blur-bg { 
-            position: absolute; inset: -10%; width: 120%; height: 120%; 
-            object-fit: cover; z-index: 1; opacity: 0;
-            filter: blur(20px) brightness(0.4);
-            transform: scale(1.1) translateZ(0);
-            transition: opacity 0.5s ease;
-        }
-        
-        .main-img { 
-            position: relative; z-index: 2; opacity: 0; 
-            transition: opacity 0.3s ease; 
-            max-width: 100%; max-height: 100%; 
-            pointer-events: none; transform: translateZ(0);
-        }
+html,body{
+  margin:0;
+  height:100%;
+  background:var(--bg);
+  color:#fff;
+  font-family:-apple-system,sans-serif;
+  overflow:hidden;
+}
 
-        .loaded .main-img, .loaded .blur-bg { opacity: 1; }
-        .is-horizontal { width: 94%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .is-vertical { width: 100%; height: 100%; object-fit: cover; }
+.flex-center{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  height:100%;
+}
 
-        /* ГЛОБАЛЬНЫЙ СТАТУС */
-        #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
-        .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+.hidden{display:none!important}
 
-        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .tag-btn.active { background: var(--accent); color: #000; }
-        
-        .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-    </style>
+/* AUTH */
+#auth-screen{position:fixed;inset:0;z-index:1000;background:var(--bg)}
+.pin-dots{display:flex;gap:14px;margin-bottom:35px}
+.dot{width:14px;height:14px;border:2px solid #333;border-radius:50%}
+.dot.filled{background:#fff;border-color:#fff}
+.keypad{display:grid;grid-template-columns:repeat(3,75px);gap:14px}
+.key{
+  width:75px;height:75px;border-radius:50%;
+  background:#111;display:flex;align-items:center;justify-content:center;
+  font-size:22px
+}
+
+/* SWIPER */
+.swiper{width:310px;height:440px}
+.swiper-slide{
+  border-radius:35px;
+  background:#000;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* FAKE BACKGROUND (NO BLUR) */
+.fake-bg{
+  position:absolute;
+  inset:0;
+  object-fit:cover;
+  opacity:.35;
+  transform:scale(1.15);
+  z-index:1;
+}
+
+/* IMAGE */
+.main-img{
+  position:relative;
+  z-index:2;
+  max-width:100%;
+  max-height:100%;
+  opacity:0;
+  transition:opacity .25s ease-out;
+}
+
+.main-img.loaded{opacity:1}
+.is-vertical{width:100%;height:100%;object-fit:cover}
+.is-horizontal{width:94%;height:auto;border-radius:16px}
+
+/* NAV */
+.nav-container{
+  position:fixed;
+  bottom:30px;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  z-index:50;
+}
+
+.nav-pill{
+  background:var(--pill);
+  backdrop-filter:blur(18px);
+  padding:8px;
+  border-radius:40px;
+  display:flex;
+}
+
+.nav-item{
+  background:none;
+  border:none;
+  color:var(--gray);
+  padding:8px 15px;
+  border-radius:30px;
+}
+
+.nav-item.active{
+  color:#fff;
+  background:#222;
+}
+
+.fab{
+  width:70px;height:70px;border-radius:50%;
+  background:var(--pill);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+</style>
 </head>
+
 <body>
 
-    <div id="auth-screen" class="flex-center">
-        <div class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-        <div class="keypad">
-            <div class="key" onclick="press(1)">1</div><div class="key" onclick="press(2)">2</div><div class="key" onclick="press(3)">3</div>
-            <div class="key" onclick="press(4)">4</div><div class="key" onclick="press(5)">5</div><div class="key" onclick="press(6)">6</div>
-            <div class="key" onclick="press(7)">7</div><div class="key" onclick="press(8)">8</div><div class="key" onclick="press(9)">9</div>
-            <div class="key" style="background:transparent" onclick="press('C')">×</div><div class="key" onclick="press(0)">0</div>
-        </div>
-    </div>
+<div id="auth-screen" class="flex-center">
+  <div class="pin-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+  <div class="keypad">
+    <div class="key" onclick="press(1)">1</div>
+    <div class="key" onclick="press(2)">2</div>
+    <div class="key" onclick="press(3)">3</div>
+    <div class="key" onclick="press(4)">4</div>
+    <div class="key" onclick="press(5)">5</div>
+    <div class="key" onclick="press(6)">6</div>
+    <div class="key" onclick="press(7)">7</div>
+    <div class="key" onclick="press(8)">8</div>
+    <div class="key" onclick="press(9)">9</div>
+    <div></div>
+    <div class="key" onclick="press(0)">0</div>
+    <div class="key" onclick="press('C')">×</div>
+  </div>
+</div>
 
-    <div id="app-screen" class="hidden">
-        <div id="tab-main" class="tab-content flex-center">
-            <div class="swiper" id="sw-main"><div class="swiper-wrapper" id="w-main"></div></div>
-        </div>
+<div id="app-screen" class="hidden flex-center">
+  <div class="swiper" id="sw-main">
+    <div class="swiper-wrapper" id="w-main"></div>
+  </div>
+</div>
 
-        <div id="tab-tags" class="tab-content hidden flex-center">
-            <div class="tag-cloud" id="t-cloud"></div>
-            <div class="swiper" id="sw-tags"><div class="swiper-wrapper" id="w-tag"></div></div>
-        </div>
+<div class="nav-container hidden" id="nav">
+  <div class="nav-pill">
+    <button class="nav-item active">Склад</button>
+  </div>
+  <div class="fab">
+    <span class="material-symbols-rounded">download</span>
+  </div>
+</div>
 
-        <div id="tab-upload" class="tab-content hidden flex-center">
-            <div class="tag-cloud" id="up-t-cloud"></div>
-            <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:400px; border:2px dashed #222; border-radius:25px;">
-                <span class="material-symbols-rounded" style="font-size:40px; color:#222">add_photo_alternate</span>
-                <input type="file" id="fileIn" class="hidden" accept="image/*" multiple onchange="previewUpload(this)">
-            </div>
-            <div id="up-box" class="hidden flex-center">
-                <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
-                <button onclick="resetUpload()" style="margin-top:20px; color:#555; background:none; border:none; font-size:10px; font-weight:800;">ОТМЕНИТЬ</button>
-            </div>
-        </div>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-        <div class="nav-container">
-            <div class="nav-pill">
-                <button class="nav-item active" onclick="switchTab('main', this)"><span class="material-symbols-rounded">grid_view</span><span>Склад</span></button>
-                <button class="nav-item" onclick="switchTab('tags', this)"><span class="material-symbols-rounded">style</span><span>Теги</span></button>
-                <button class="nav-item" onclick="switchTab('upload', this)"><span class="material-symbols-rounded">cloud_upload</span><span>Загрузка</span></button>
-            </div>
-        </div>
-    </div>
+<script>
+const PIN_HASH="__PIN_HASH__";
+const FILES=__ALL_FILES__;
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-        const PIN_HASH = "__PIN_HASH__";
-        const FILES = __ALL_FILES__;
-        const TYPES = __TYPES_JSON__;
-        const REPO = "cursorus/cards";
+let pin="",swiper;
 
-        let userPin = "", activeTab = 'main', sm, st, su;
-        let fileCache = new Map();
+function press(n){
+  if(n==='C') pin="";
+  else if(pin.length<4) pin+=n;
 
-        function press(n) {
-            if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
-            document.querySelectorAll('.dot').forEach((d, i) => d.className = i < userPin.length ? 'dot filled' : 'dot');
-            if(userPin.length === 4) {
-                if(CryptoJS.SHA256(userPin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    document.getElementById('app-screen').classList.remove('hidden');
-                    init();
-                } else { userPin = ""; document.querySelectorAll('.dot').forEach(d => d.className = 'dot'); }
-            }
-        }
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    d.className=i<pin.length?'dot filled':'dot';
+  });
 
-        function init() {
-            renderMain();
-            Object.keys(TYPES || {}).forEach(t => createTagBtn(t, 't-cloud', (e) => toggleTag(t, e.target)));
-        }
+  if(pin.length===4){
+    setTimeout(()=>{
+      if(CryptoJS.SHA256(pin).toString()===PIN_HASH.replace(/['"]/g,'')){
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        document.getElementById('nav').classList.remove('hidden');
+        init();
+      } else {
+        pin="";
+        document.querySelectorAll('.dot').forEach(d=>d.className='dot');
+      }
+    },150);
+  }
+}
 
-        // Оптимизированная загрузка: дешифруем только по запросу
-        async function loadFile(fileName, slideEl) {
-            if (fileCache.has(fileName)) return fileCache.get(fileName);
-            
-            try {
-                const r = await fetch(`images/${fileName}`);
-                const enc = await r.text();
-                const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
-                
-                const img = slideEl.querySelector('.main-img');
-                const bg = slideEl.querySelector('.blur-bg');
-                
-                img.src = src; bg.src = src;
-                img.onload = () => {
-                    const aspect = img.naturalHeight / img.naturalWidth;
-                    img.classList.add(aspect > 1.2 ? 'is-vertical' : 'is-horizontal');
-                    slideEl.classList.add('loaded');
-                };
-                fileCache.set(fileName, src);
-            } catch(e) { console.error("Ошибка дешифровки"); }
-        }
+async function decrypt(f){
+  const r=await fetch(`images/${f}`);
+  const enc=await r.text();
+  return CryptoJS.AES.decrypt(enc,pin).toString(CryptoJS.enc.Utf8);
+}
 
-        function renderMain() {
-            const w = document.getElementById('w-main');
-            const validFiles = FILES.filter(f => f.endsWith('.enc'));
-            
-            w.innerHTML = validFiles.map(f => `
-                <div class="swiper-slide" data-file="${f}">
-                    <img class="main-img">
-                    <img class="blur-bg">
-                </div>
-            `).join('');
+function createSlide(src){
+  const s=document.createElement('div');
+  s.className='swiper-slide';
 
-            sm = new Swiper("#sw-main", {
-                effect: "cards",
-                grabCursor: true,
-                perSlideOffset: 10,
-                perSlideRotate: 4,
-                speed: 400,
-                watchSlidesProgress: true,
-                cardsEffect: { slideShadows: false }, // КРИТИЧНО ДЛЯ СКОРОСТИ
-                on: {
-                    init: function() { handleLazy(this); },
-                    slideChange: function() { handleLazy(this); }
-                }
-            });
-        }
+  const bg=document.createElement('img');
+  bg.className='fake-bg';
 
-        // Умная дешифровка соседей
-        function handleLazy(swiper) {
-            const slides = swiper.slides;
-            const idx = swiper.activeIndex;
-            // Дешифруем текущую, предыдущую и следующие две
-            for(let i = idx - 1; i <= idx + 2; i++) {
-                if(slides[i]) {
-                    const f = slides[i].getAttribute('data-file');
-                    if(f) loadFile(f, slides[i]);
-                }
-            }
-        }
+  const img=document.createElement('img');
+  img.className='main-img';
 
-        function switchTab(t, b) {
-            activeTab = t;
-            document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
-            document.getElementById(`tab-${t}`).classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-            b.classList.add('active');
-        }
+  img.onload=()=>{
+    const a=img.naturalHeight/img.naturalWidth;
+    img.classList.add(a>1.2?'is-vertical':'is-horizontal');
+    img.classList.add('loaded');
+    bg.src=img.src;
+  };
 
-        function createTagBtn(t, cont, fn) {
-            const b = document.createElement('button'); b.className = 'tag-btn'; b.innerText = t.toUpperCase();
-            b.onclick = fn; document.getElementById(cont).appendChild(b);
-        }
+  img.src=src;
+  s.append(bg,img);
+  return s;
+}
 
-        async function toggleTag(t, el) {
-            el.classList.toggle('active');
-            const active = Array.from(document.querySelectorAll('#t-cloud .tag-btn.active')).map(b => b.innerText.toLowerCase());
-            const w = document.getElementById('w-tag');
-            
-            if(active.length === 0) { w.innerHTML = ''; return; }
-            
-            const filtered = FILES.filter(f => active.every(tag => f.includes(tag)));
-            w.innerHTML = filtered.map(f => `
-                <div class="swiper-slide" data-file="${f}">
-                    <img class="main-img">
-                    <img class="blur-bg">
-                </div>
-            `).join('');
+async function init(){
+  const w=document.getElementById('w-main');
+  for(const f of FILES){
+    if(!f.endsWith('.enc')) continue;
+    const src=await decrypt(f);
+    w.appendChild(createSlide(src));
+  }
 
-            if(st) st.destroy();
-            st = new Swiper("#sw-tags", {
-                effect: "cards",
-                cardsEffect: { slideShadows: false },
-                on: {
-                    init: function() { handleLazy(this); },
-                    slideChange: function() { handleLazy(this); }
-                }
-            });
-        }
-    </script>
+  swiper=new Swiper('#sw-main',{
+    effect:'creative',
+    speed:280,
+    resistanceRatio:.85,
+    creativeEffect:{
+      prev:{translate:[0,0,-120],scale:.95},
+      next:{translate:[0,'100%',0]}
+    }
+  });
+}
+</script>
+
 </body>
 </html>
