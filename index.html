@@ -1,212 +1,306 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>Карточки</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Карточки</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root { 
+            --bg: #050505; 
+            --accent: #fff; 
+            --pill: rgba(20,20,20,0.8); 
+            --gray: #555; 
+            --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            background: var(--bg); color: #fff; 
+            font-family: -apple-system, system-ui, sans-serif; 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased;
+        }
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+        /* Глобальная оптимизация GPU */
+        * { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
 
-<style>
-:root {
-  --bg:#050505;
-  --pill:rgba(20,20,20,.8);
-  --accent:#fff;
-  --gray:#555;
-}
+        .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
+        .hidden { display: none !important; }
 
-html,body{
-  margin:0;height:100%;
-  background:var(--bg);color:#fff;
-  font-family:-apple-system,sans-serif;
-  overflow:hidden;
-}
+        /* ПИН-ЭКРАН */
+        #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
+        .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
+        .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
+        .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
+        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; -webkit-tap-highlight-color: transparent; }
 
-.hidden{display:none!important}
-.flex-center{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column}
+        /* НАВИГАЦИЯ */
+        .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
+        .nav-item.active { color: var(--accent); background: #222; }
+        .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .fab { width: 70px; height: 70px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-/* ===== MODE SWITCH ===== */
-.mode-switch{
-  position:fixed;
-  top:20px;
-  z-index:200;
-  background:var(--pill);
-  border-radius:30px;
-  padding:6px;
-  display:flex;
-  gap:6px;
-}
-.mode-btn{
-  border:none;
-  background:none;
-  color:#666;
-  padding:6px 14px;
-  border-radius:20px;
-  font-size:11px;
-  font-weight:800;
-}
-.mode-btn.active{
-  background:#222;
-  color:#fff;
-}
+        /* КАРТОЧКИ - БЕЗ БЛЮРА ДЛЯ ПЛАВНОСТИ */
+        .swiper { width: 310px; height: 440px; perspective: 1000px; }
+        .swiper-slide { 
+            border-radius: 35px; background: #000; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center;
+            will-change: transform; transform: translate3d(0,0,0);
+        }
+        
+        .blur-bg { 
+            position: absolute; inset: 0; width: 100%; height: 100%; 
+            object-fit: cover; z-index: 1; opacity: 0.3; 
+            filter: brightness(0.2); /* Яркость дешевле блюра */
+            pointer-events: none;
+        }
+        
+        .main-img { 
+            position: relative; z-index: 2; opacity: 0; 
+            transition: opacity 0.3s ease; max-width: 100%; max-height: 100%; 
+            pointer-events: none; will-change: transform;
+        }
+        .main-img.loaded { opacity: 1; }
+        
+        .is-vertical { width: 100%; height: 100%; object-fit: cover; }
+        .is-horizontal { width: 92%; height: auto; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
 
-/* ===== SWIPER ===== */
-.swiper{width:310px;height:440px;transform:translateZ(0)}
-.swiper-slide{
-  background:#000;
-  border-radius:35px;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+        /* СТАТУС */
+        #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
+        .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-/* FAKE BG (NO BLUR) */
-.fake-bg{
-  position:absolute;
-  inset:0;
-  object-fit:cover;
-  opacity:.35;
-  transform:scale(1.15);
-  z-index:1;
-}
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; margin-bottom: 10px; }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .tag-btn.active { background: var(--accent); color: #000; }
 
-/* IMAGE */
-.main-img{
-  z-index:2;
-  max-width:100%;
-  max-height:100%;
-  opacity:0;
-  transition:opacity .25s ease-out;
-}
-.main-img.loaded{opacity:1}
-.is-vertical{width:100%;height:100%;object-fit:cover}
-.is-horizontal{width:94%;height:auto;border-radius:16px}
-
-/* NAV */
-.nav-container{
-  position:fixed;
-  bottom:30px;
-  width:100%;
-  display:flex;
-  justify-content:center;
-  gap:15px;
-}
-.nav-pill{
-  background:var(--pill);
-  padding:8px;
-  border-radius:40px;
-  display:flex;
-}
-.nav-item{
-  background:none;border:none;
-  color:var(--gray);
-  padding:8px 15px;
-  border-radius:30px;
-}
-.nav-item.active{color:#fff;background:#222}
-</style>
+        .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        .fly-away { transform: translateY(-120vh) rotate(-10deg) !important; opacity: 0 !important; transition: 0.6s ease-in !important; }
+    </style>
 </head>
-
 <body>
 
-<!-- MODE SWITCH -->
-<div class="mode-switch">
-  <button class="mode-btn active" onclick="setMode('cards',this)">CARDS</button>
-  <button class="mode-btn" onclick="setMode('vertical',this)">VERTICAL</button>
-</div>
+    <div id="auth-screen" class="flex-center">
+        <div class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="keypad">
+            <div class="key" onclick="press(1)">1</div><div class="key" onclick="press(2)">2</div><div class="key" onclick="press(3)">3</div>
+            <div class="key" onclick="press(4)">4</div><div class="key" onclick="press(5)">5</div><div class="key" onclick="press(6)">6</div>
+            <div class="key" onclick="press(7)">7</div><div class="key" onclick="press(8)">8</div><div class="key" onclick="press(9)">9</div>
+            <div></div><div class="key" onclick="press(0)">0</div><div class="key" onclick="press('C')">×</div>
+        </div>
+    </div>
 
-<div class="flex-center">
-  <div class="swiper" id="sw-main">
-    <div class="swiper-wrapper" id="w-main"></div>
-  </div>
-</div>
+    <div id="app-screen" class="hidden">
+        <div id="tab-main" class="tab-content flex-center">
+            <div class="swiper" id="sw-main"><div class="swiper-wrapper" id="w-main"></div></div>
+        </div>
 
-<div class="nav-container">
-  <div class="nav-pill">
-    <button class="nav-item active">Склад</button>
-  </div>
-</div>
+        <div id="tab-tags" class="tab-content hidden flex-center">
+            <div class="tag-cloud" id="t-cloud"></div>
+            <div class="swiper" id="sw-tags"><div class="swiper-wrapper" id="w-tag"></div></div>
+        </div>
 
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <div id="tab-upload" class="tab-content hidden flex-center">
+            <div class="tag-cloud" id="up-t-cloud"></div>
+            <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:380px; border:2px dashed #222; border-radius:30px;">
+                <span class="material-symbols-rounded" style="font-size:40px; color:#333">add_photo_alternate</span>
+                <p style="font-size:10px; color:#555; font-weight:800; margin-top:15px; letter-spacing:1px">ВЫБРАТЬ ФАЙЛЫ</p>
+                <input type="file" id="fileIn" class="hidden" accept="image/*" multiple onchange="previewUpload(this)">
+            </div>
+            <div id="up-box" class="hidden flex-center">
+                <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
+                <button onclick="resetUpload()" style="margin-top:20px; background:none; border:none; color:#555; font-size:10px; font-weight:800;">ОТМЕНИТЬ</button>
+            </div>
+        </div>
 
-<script>
-const FILES = ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"];
-const PIN = "__PIN__"; // ты подставляешь свой
-let swiper, MODE = 'cards';
+        <div id="global-status"><div class="loader-ring" id="g-ring"></div></div>
 
-/* ===== DECRYPT ===== */
-async function getSrc(f){
-  const r = await fetch(`images/${f}`);
-  const enc = await r.text();
-  return CryptoJS.AES.decrypt(enc,PIN).toString(CryptoJS.enc.Utf8);
-}
+        <div class="nav-container">
+            <div class="nav-pill">
+                <button class="nav-item active" onclick="switchTab('main', this)"><span class="material-symbols-rounded">grid_view</span><span>Склад</span></button>
+                <button class="nav-item" onclick="switchTab('tags', this)"><span class="material-symbols-rounded">style</span><span>Теги</span></button>
+                <button class="nav-item" onclick="switchTab('upload', this)"><span class="material-symbols-rounded">cloud_upload</span><span>Загрузка</span></button>
+            </div>
+            <button class="fab" onclick="handleAction()"><span class="material-symbols-rounded" id="act-icon">download</span></button>
+        </div>
+    </div>
 
-/* ===== SLIDE ===== */
-function createSlide(src){
-  const s=document.createElement('div');
-  s.className='swiper-slide';
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        const PIN_HASH = "4225466f46976e5877d0c8f7a77eafbf97a92841dedabae705816fa4c76e033f";
+        const FILES = ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"];
+        const REPO = "cursorus/cards";
 
-  const bg=document.createElement('img');
-  bg.className='fake-bg';
+        let userPin = "", activeTab = 'main', sm, st, su;
+        let upFiles = [], selUpTags = new Set(), selFilterTags = new Set();
+        let fileCache = new Map();
 
-  const img=document.createElement('img');
-  img.className='main-img';
-  img.decoding='async';
-  img.loading='eager';
+        // Оптимизированные настройки Swiper
+        const swiperConf = { 
+            effect: "cards", 
+            grabCursor: true, 
+            perSlideOffset: 8, 
+            perSlideRotate: 2, 
+            rotate: true, 
+            slideShadows: false,
+            watchSlidesProgress: true,
+            touchStartPreventDefault: false
+        };
 
-  img.onload=()=>{
-    const a=img.naturalHeight/img.naturalWidth;
-    img.classList.add(a>1.2?'is-vertical':'is-horizontal');
-    img.classList.add('loaded');
-    bg.src=img.src;
-  };
+        function press(n) {
+            if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
+            document.querySelectorAll('.dot').forEach((d, i) => d.className = i < userPin.length ? 'dot filled' : 'dot');
+            if(userPin.length === 4) setTimeout(() => {
+                if(CryptoJS.SHA256(userPin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('app-screen').classList.remove('hidden');
+                    init();
+                } else { userPin = ""; document.querySelectorAll('.dot').forEach(d => d.className = 'dot'); }
+            }, 200);
+        }
 
-  img.src=src;
-  s.append(bg,img);
-  return s;
-}
+        function init() {
+            renderMain();
+            const tags = ["ru", "en", "art", "work", "memes"]; // Или ваш список из TYPES
+            tags.forEach(t => {
+                createTagBtn(t, 't-cloud', (e) => toggleTag(t, e.target, selFilterTags, true));
+                createTagBtn(t, 'up-t-cloud', (e) => toggleTag(t, e.target, selUpTags, false));
+            });
+        }
 
-/* ===== INIT ===== */
-async function init(){
-  const w=document.getElementById('w-main');
-  w.innerHTML='';
-  for(const f of FILES){
-    if(!f.endsWith('.enc')) continue;
-    const src=await getSrc(f);
-    w.appendChild(createSlide(src));
-  }
-  initSwiper();
-}
+        async function getFileMetadata(f) {
+            if (fileCache.has(f)) return fileCache.get(f);
+            try {
+                const r = await fetch(`images/${f}`);
+                const enc = await r.text();
+                const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
+                
+                return new Promise(res => {
+                    const i = new Image();
+                    i.onload = () => {
+                        const aspect = i.naturalHeight / i.naturalWidth;
+                        const meta = { src, rank: aspect > 1.2 ? 1 : (aspect < 0.8 ? 3 : 2) };
+                        fileCache.set(f, meta);
+                        res(meta);
+                    };
+                    i.src = src;
+                });
+            } catch(e) { return {src: '', rank: 4}; }
+        }
 
-/* ===== SWIPER MODES ===== */
-function initSwiper(){
-  if(swiper) swiper.destroy(true,true);
+        async function renderMain() {
+            const w = document.getElementById('w-main'); 
+            w.innerHTML = '';
+            document.getElementById('g-ring').style.opacity = '1';
+            const results = await Promise.all(FILES.filter(f => f.endsWith('.enc')).map(f => getFileMetadata(f).then(m => ({name: f, ...m}))));
+            results.sort((a, b) => a.rank - b.rank).forEach(item => w.appendChild(createSlide(item.name, item.src)));
+            document.getElementById('g-ring').style.opacity = '0';
+            if(sm) sm.destroy();
+            sm = new Swiper("#sw-main", swiperConf);
+        }
 
-  swiper = new Swiper('#sw-main',{
-    direction: MODE === 'vertical' ? 'vertical' : 'horizontal',
-    effect: MODE === 'cards' ? 'cards' : 'slide',
-    speed: MODE === 'cards' ? 260 : 220,
-    resistanceRatio: .85,
-    cardsEffect:{
-      rotate:false,
-      slideShadows:false
-    }
-  });
-}
+        function createSlide(f, localData = null) {
+            const slide = document.createElement('div'); slide.className = 'swiper-slide';
+            const bg = document.createElement('img'); bg.className = 'blur-bg';
+            const img = document.createElement('img'); 
+            img.className = 'main-img';
+            img.decoding = "async"; // Оптимизация загрузки
+            slide.append(bg, img);
 
-/* ===== MODE SWITCH ===== */
-function setMode(m,btn){
-  MODE=m;
-  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  initSwiper();
-}
+            const applyLogic = (src) => {
+                img.src = src; bg.src = src;
+                img.onload = () => {
+                    if((img.naturalHeight / img.naturalWidth) > 1.2) img.classList.add('is-vertical');
+                    else { img.classList.add('is-horizontal'); bg.style.display = 'block'; }
+                    img.classList.add('loaded');
+                };
+            }
+            if(localData) applyLogic(localData);
+            else getFileMetadata(f).then(m => applyLogic(m.src));
+            return slide;
+        }
 
-init();
-</script>
+        async function toggleTag(t, el, set, isFilter) {
+            set.has(t) ? (set.delete(t), el.classList.remove('active')) : (set.add(t), el.classList.add('active'));
+            if(isFilter) {
+                const w = document.getElementById('w-tag'); w.innerHTML = '';
+                const active = Array.from(selFilterTags);
+                if(active.length) {
+                    document.getElementById('g-ring').style.opacity = '1';
+                    const filtered = FILES.filter(f => active.every(tag => f.includes(tag)));
+                    const res = await Promise.all(filtered.map(f => getFileMetadata(f).then(m => ({name: f, ...m}))));
+                    res.sort((a, b) => a.rank - b.rank).forEach(item => w.appendChild(createSlide(item.name, item.src)));
+                    document.getElementById('g-ring').style.opacity = '0';
+                    if(st) st.destroy(); st = new Swiper("#sw-tags", swiperConf);
+                }
+            }
+        }
 
+        function createTagBtn(t, cont, fn) {
+            const b = document.createElement('button'); b.className = 'tag-btn'; b.innerText = t.toUpperCase();
+            b.onclick = fn; document.getElementById(cont).appendChild(b);
+        }
+
+        function switchTab(t, b) {
+            activeTab = t;
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
+            document.getElementById(`tab-${t}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById('act-icon').innerText = t === 'upload' ? 'publish' : 'download';
+        }
+
+        async function previewUpload(input) {
+            if(!input.files.length) return;
+            upFiles = []; const w = document.getElementById('w-up'); w.innerHTML = '';
+            document.getElementById('up-zone').classList.add('hidden');
+            document.getElementById('up-box').classList.remove('hidden');
+            for (let file of input.files) {
+                const data = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+                upFiles.push(data); w.appendChild(createSlide(null, data));
+            }
+            if(su) su.destroy(); su = new Swiper("#sw-up", swiperConf);
+        }
+
+        function resetUpload() {
+            upFiles = []; document.getElementById('up-box').classList.add('hidden');
+            document.getElementById('up-zone').classList.remove('hidden');
+        }
+
+        async function handleAction() {
+            if(activeTab === 'upload') {
+                if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
+                const token = prompt("GitHub Token:"); if(!token) return;
+                document.querySelectorAll('#w-up .swiper-slide').forEach((s, i) => setTimeout(() => s.classList.add('fly-away'), i * 80));
+                setTimeout(async () => {
+                    document.getElementById('g-ring').style.opacity = '1';
+                    const tagStr = Array.from(selUpTags).join('_');
+                    for(let i = 0; i < upFiles.length; i++) {
+                        const enc = CryptoJS.AES.encrypt(upFiles[i], userPin).toString();
+                        const name = `${tagStr}_${Date.now()}_${i}.enc`;
+                        await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `token ${token}` },
+                            body: JSON.stringify({ message: "up", content: btoa(unescape(encodeURIComponent(enc))) })
+                        });
+                    }
+                    location.reload();
+                }, 600);
+            } else {
+                const s = activeTab === 'main' ? sm : st;
+                if(!s || !s.slides[s.activeIndex]) return;
+                const a = document.createElement('a');
+                a.href = s.slides[s.activeIndex].querySelector('.main-img').src;
+                a.download = "card.png"; a.click();
+            }
+        }
+    </script>
 </body>
 </html>
