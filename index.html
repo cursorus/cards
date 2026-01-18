@@ -31,23 +31,27 @@
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .fab { width: 70px; height: 70px; background: var(--pill); color: #555; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-        /* КАРТОЧКИ И АНИМАЦИИ */
+        /* КАРТОЧКИ */
         .swiper { width: 310px; height: 440px; transition: 0.5s; }
-        .swiper-slide { border-radius: 35px; background: #0f0f0f; overflow: hidden; border: none; position: relative; }
-        .swiper-slide img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.5s; }
-        .swiper-slide img.loaded { opacity: 1; }
+        .swiper-slide { border-radius: 35px; background: #000; overflow: hidden; border: none; position: relative; display: flex; align-items: center; justify-content: center; }
+        
+        /* ЭФФЕКТ ДЛЯ ГОРИЗОНТАЛЬНЫХ ФОТО */
+        .blur-bg { position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px); object-fit: cover; filter: blur(25px) brightness(0.6); z-index: 1; display: none; }
+        .main-img { position: relative; z-index: 2; opacity: 0; transition: 0.5s; max-width: 100%; max-height: 100%; }
+        .main-img.loaded { opacity: 1; }
+        
+        .is-vertical { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+        .is-horizontal { width: 92%; height: auto; object-fit: contain; border-radius: 18px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
 
-        /* АНИМАЦИЯ ПОЯВЛЕНИЯ (СНИЗУ) */
+        /* АНИМАЦИИ */
         .slide-in-bottom { animation: slideIn 0.6s var(--spring) forwards; }
         @keyframes slideIn {
             from { transform: translateY(100vh) rotate(10deg); opacity: 0; }
             to { transform: translateY(0) rotate(0); opacity: 1; }
         }
-
-        /* АНИМАЦИЯ ВЫЛЕТА (НАВЕРХ) */
         .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 1s cubic-bezier(0.4, 0, 0.2, 1) !important; }
 
-        /* ЗАГРУЗКА И ГАЛОЧКА */
+        /* ГЛОБАЛЬНЫЙ СТАТУС */
         #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
         .loader-ring { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
         .success-circle { position: absolute; width: 80px; height: 80px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: 0.6s var(--spring); }
@@ -121,6 +125,7 @@
 
         let userPin = "", activeTab = 'main', sm, st, su;
         let upFiles = [], selUpTags = new Set(), selFilterTags = new Set();
+        let fileCache = new Map(); // Кеш для хранения данных об ориентации
 
         function press(n) {
             if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
@@ -143,29 +148,79 @@
             });
         }
 
-        function renderMain() {
+        // Функция для получения "веса" ориентации (Вертикаль 1, Квадрат 2, Горизонталь 3)
+        async function getFileMetadata(f) {
+            if (fileCache.has(f)) return fileCache.get(f);
+            return new Promise(res => {
+                fetch(`images/${f}`).then(r => r.text()).then(enc => {
+                    const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
+                    const i = new Image();
+                    i.onload = () => {
+                        const aspect = i.naturalHeight / i.naturalWidth;
+                        let rank = 2; // Квадрат по умолчанию
+                        if (aspect > 1.2) rank = 1;      // Вертикаль
+                        else if (aspect < 0.8) rank = 3; // Горизонталь
+                        const meta = { src, rank };
+                        fileCache.set(f, meta);
+                        res(meta);
+                    };
+                    i.src = src;
+                });
+            });
+        }
+
+        async function renderMain() {
             const w = document.getElementById('w-main'); w.innerHTML = '';
-            if(FILES) FILES.forEach(f => { if(f.endsWith('.enc')) w.appendChild(createSlide(f)); });
+            document.getElementById('g-ring').style.opacity = '1';
+            
+            const validFiles = FILES.filter(f => f.endsWith('.enc'));
+            const dataList = [];
+            
+            for (let f of validFiles) {
+                dataList.push({ name: f, ...(await getFileMetadata(f)) });
+            }
+
+            // Сортировка: сначала ранг 1, потом 2, потом 3
+            dataList.sort((a, b) => a.rank - b.rank);
+
+            dataList.forEach(item => w.appendChild(createSlide(item.name, item.src)));
+            
+            document.getElementById('g-ring').style.opacity = '0';
             if(sm) sm.destroy();
             sm = new Swiper("#sw-main", { effect: "cards", grabCursor: true });
         }
 
         function createSlide(f, localData = null) {
-            const d = document.createElement('div'); d.className = 'swiper-slide';
-            const img = document.createElement('img');
-            if(localData) {
-                img.src = localData; img.classList.add('loaded'); d.appendChild(img);
-            } else {
+            const slide = document.createElement('div'); slide.className = 'swiper-slide';
+            const bg = document.createElement('img'); bg.className = 'blur-bg';
+            const img = document.createElement('img'); img.className = 'main-img';
+            slide.append(bg, img);
+
+            const applyLogic = (src) => {
+                img.src = src; bg.src = src;
+                img.onload = () => {
+                    const aspect = img.naturalHeight / img.naturalWidth;
+                    if(aspect > 1.2) {
+                        img.classList.add('is-vertical');
+                    } else {
+                        img.classList.add('is-horizontal');
+                        bg.style.display = 'block';
+                    }
+                    img.classList.add('loaded');
+                };
+            }
+
+            if(localData) applyLogic(localData);
+            else {
                 fetch(`images/${f}`).then(r => r.text()).then(enc => {
-                    img.src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
-                    img.onload = () => img.classList.add('loaded');
-                    d.appendChild(img);
+                    const dec = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
+                    applyLogic(dec);
                 });
             }
-            return d;
+            return slide;
         }
 
-        function toggleTag(t, el, set, isFilter) {
+        async function toggleTag(t, el, set, isFilter) {
             if (set.has(t)) { set.delete(t); el.classList.remove('active'); } 
             else { set.add(t); el.classList.add('active'); }
             
@@ -173,9 +228,14 @@
                 const w = document.getElementById('w-tag'); w.innerHTML = '';
                 const active = Array.from(selFilterTags);
                 if(active.length > 0) {
-                    // Исправленный фильтр: файл должен содержать ВСЕ выбранные теги
                     const filtered = FILES.filter(f => active.every(tag => f.includes(tag)));
-                    filtered.forEach(f => w.appendChild(createSlide(f)));
+                    const dataList = [];
+                    for (let f of filtered) {
+                        dataList.push({ name: f, ...(await getFileMetadata(f)) });
+                    }
+                    dataList.sort((a, b) => a.rank - b.rank);
+                    dataList.forEach(item => w.appendChild(createSlide(item.name, item.src)));
+
                     if(st) st.destroy();
                     st = new Swiper("#sw-tags", { effect: "cards" });
                 }
@@ -200,8 +260,6 @@
             if(!input.files.length) return;
             upFiles = [];
             const w = document.getElementById('w-up'); w.innerHTML = '';
-            
-            // Прячем зону выбора и показываем Swiper
             document.getElementById('up-zone').classList.add('hidden');
             document.getElementById('up-box').classList.remove('hidden');
             document.getElementById('sw-up').classList.add('slide-in-bottom');
@@ -227,12 +285,10 @@
                 if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
                 const token = prompt("GitHub Token:"); if(!token) return;
 
-                // 1. Улетают карточки
                 document.querySelectorAll('#w-up .swiper-slide').forEach((s, i) => {
                     setTimeout(() => s.classList.add('fly-away'), i * 150);
                 });
 
-                // 2. Лоадер и процесс
                 setTimeout(async () => {
                     document.getElementById('g-ring').style.opacity = '1';
                     const tagStr = Array.from(selUpTags).join('_');
@@ -247,7 +303,6 @@
                             });
                         } catch(e) {}
                     }
-                    // 3. Галочка
                     document.getElementById('g-ring').style.opacity = '0';
                     document.getElementById('g-done').style.transform = 'scale(1)';
                     setTimeout(() => location.reload(), 1500);
@@ -256,7 +311,7 @@
                 const s = activeTab === 'main' ? sm : st;
                 if(!s || !s.slides[s.activeIndex]) return;
                 const a = document.createElement('a');
-                a.href = s.slides[s.activeIndex].querySelector('img').src;
+                a.href = s.slides[s.activeIndex].querySelector('.main-img').src;
                 a.download = "vault_image.png"; a.click();
             }
         }
