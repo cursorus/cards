@@ -20,7 +20,7 @@
         .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
         .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
-        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; -webkit-tap-highlight-color: transparent; }
 
         /* НАВИГАЦИЯ */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
@@ -31,37 +31,41 @@
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .fab { width: 70px; height: 70px; background: var(--pill); color: #555; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-        /* КАРТОЧКИ */
-        .swiper { width: 310px; height: 440px; transition: 0.5s; }
-        .swiper-slide { border-radius: 35px; background: #000; overflow: hidden; border: none; position: relative; display: flex; align-items: center; justify-content: center; }
+        /* КАРТОЧКИ - ОПТИМИЗАЦИЯ ЛАГОВ */
+        .swiper { width: 310px; height: 440px; perspective: 1200px; }
+        .swiper-slide { 
+            border-radius: 35px; background: #000; overflow: hidden; border: none; 
+            position: relative; display: flex; align-items: center; justify-content: center;
+            will-change: transform; transform: translateZ(0); /* Force GPU */
+            backface-visibility: hidden;
+        }
         
-        /* ЭФФЕКТ ДЛЯ ГОРИЗОНТАЛЬНЫХ ФОТО */
-        .blur-bg { position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px); object-fit: cover; filter: blur(25px) brightness(0.6); z-index: 1; display: none; }
-        .main-img { position: relative; z-index: 2; opacity: 0; transition: 0.5s; max-width: 100%; max-height: 100%; }
+        .blur-bg { position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px); object-fit: cover; filter: blur(25px) brightness(0.6); z-index: 1; display: none; pointer-events: none; }
+        .main-img { position: relative; z-index: 2; opacity: 0; transition: 0.4s ease-out; max-width: 100%; max-height: 100%; pointer-events: none; will-change: opacity; }
         .main-img.loaded { opacity: 1; }
         
-        .is-vertical { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
-        .is-horizontal { width: 92%; height: auto; object-fit: contain; border-radius: 18px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .is-vertical { width: 100%; height: 100%; object-fit: cover; }
+        .is-horizontal { width: 94%; height: auto; object-fit: contain; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
         /* АНИМАЦИИ */
-        .slide-in-bottom { animation: slideIn 0.6s var(--spring) forwards; }
+        .slide-in-bottom { animation: slideIn 0.5s var(--spring) forwards; }
         @keyframes slideIn {
-            from { transform: translateY(100vh) rotate(10deg); opacity: 0; }
-            to { transform: translateY(0) rotate(0); opacity: 1; }
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 1s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        .fly-away { transform: translateY(-150vh) rotate(-15deg) !important; opacity: 0 !important; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important; }
 
         /* ГЛОБАЛЬНЫЙ СТАТУС */
         #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
-        .loader-ring { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
+        .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; transition: 0.3s; }
         .success-circle { position: absolute; width: 80px; height: 80px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: 0.6s var(--spring); }
         .success-circle span { font-size: 45px; color: #fff; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ТЕГИ */
         .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; margin-bottom: 10px; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; transition: 0.3s; }
-        .tag-btn.active { background: var(--accent); color: #000; transform: scale(1.1); }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
+        .tag-btn.active { background: var(--accent); color: #000; transform: scale(1.05); }
 
         .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
     </style>
@@ -125,7 +129,7 @@
 
         let userPin = "", activeTab = 'main', sm, st, su;
         let upFiles = [], selUpTags = new Set(), selFilterTags = new Set();
-        let fileCache = new Map(); // Кеш для хранения данных об ориентации
+        let fileCache = new Map();
 
         function press(n) {
             if(n === 'C') userPin = ""; else if(userPin.length < 4) userPin += n;
@@ -148,16 +152,19 @@
             });
         }
 
-        // Функция для получения "веса" ориентации (Вертикаль 1, Квадрат 2, Горизонталь 3)
+        // Ускоренная загрузка метаданных (параллельно)
         async function getFileMetadata(f) {
             if (fileCache.has(f)) return fileCache.get(f);
-            return new Promise(res => {
-                fetch(`images/${f}`).then(r => r.text()).then(enc => {
-                    const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
+            try {
+                const r = await fetch(`images/${f}`);
+                const enc = await r.text();
+                const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
+                
+                return new Promise(res => {
                     const i = new Image();
                     i.onload = () => {
                         const aspect = i.naturalHeight / i.naturalWidth;
-                        let rank = 2; // Квадрат по умолчанию
+                        let rank = 2; // Квадрат
                         if (aspect > 1.2) rank = 1;      // Вертикаль
                         else if (aspect < 0.8) rank = 3; // Горизонталь
                         const meta = { src, rank };
@@ -166,28 +173,36 @@
                     };
                     i.src = src;
                 });
-            });
+            } catch(e) { return {src: '', rank: 4}; }
         }
 
         async function renderMain() {
-            const w = document.getElementById('w-main'); w.innerHTML = '';
-            document.getElementById('g-ring').style.opacity = '1';
+            const w = document.getElementById('w-main'); 
+            w.innerHTML = '';
+            const ring = document.getElementById('g-ring');
+            ring.style.opacity = '1';
             
             const validFiles = FILES.filter(f => f.endsWith('.enc'));
-            const dataList = [];
             
-            for (let f of validFiles) {
-                dataList.push({ name: f, ...(await getFileMetadata(f)) });
-            }
+            // Запускаем всё параллельно, чтобы не ждать по одной картинке
+            const results = await Promise.all(validFiles.map(async f => {
+                const meta = await getFileMetadata(f);
+                return { name: f, ...meta };
+            }));
 
-            // Сортировка: сначала ранг 1, потом 2, потом 3
-            dataList.sort((a, b) => a.rank - b.rank);
+            // Сортируем уже готовый массив
+            results.sort((a, b) => a.rank - b.rank);
 
-            dataList.forEach(item => w.appendChild(createSlide(item.name, item.src)));
+            results.forEach(item => w.appendChild(createSlide(item.name, item.src)));
             
-            document.getElementById('g-ring').style.opacity = '0';
+            ring.style.opacity = '0';
             if(sm) sm.destroy();
-            sm = new Swiper("#sw-main", { effect: "cards", grabCursor: true });
+            sm = new Swiper("#sw-main", { 
+                effect: "cards", 
+                grabCursor: true,
+                resistanceRatio: 0,
+                cardsEffect: { rotate: true, slideShadows: false }
+            });
         }
 
         function createSlide(f, localData = null) {
@@ -212,10 +227,8 @@
 
             if(localData) applyLogic(localData);
             else {
-                fetch(`images/${f}`).then(r => r.text()).then(enc => {
-                    const dec = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
-                    applyLogic(dec);
-                });
+                // Если данных нет в кеше, подгружаем (для тегов)
+                getFileMetadata(f).then(m => applyLogic(m.src));
             }
             return slide;
         }
@@ -225,19 +238,26 @@
             else { set.add(t); el.classList.add('active'); }
             
             if(isFilter) {
-                const w = document.getElementById('w-tag'); w.innerHTML = '';
+                const w = document.getElementById('w-tag'); 
+                w.innerHTML = '';
+                const ring = document.getElementById('g-ring');
                 const active = Array.from(selFilterTags);
+                
                 if(active.length > 0) {
+                    ring.style.opacity = '1';
                     const filtered = FILES.filter(f => active.every(tag => f.includes(tag)));
-                    const dataList = [];
-                    for (let f of filtered) {
-                        dataList.push({ name: f, ...(await getFileMetadata(f)) });
-                    }
-                    dataList.sort((a, b) => a.rank - b.rank);
-                    dataList.forEach(item => w.appendChild(createSlide(item.name, item.src)));
+                    
+                    const results = await Promise.all(filtered.map(async f => {
+                        const meta = await getFileMetadata(f);
+                        return { name: f, ...meta };
+                    }));
 
+                    results.sort((a, b) => a.rank - b.rank);
+                    results.forEach(item => w.appendChild(createSlide(item.name, item.src)));
+
+                    ring.style.opacity = '0';
                     if(st) st.destroy();
-                    st = new Swiper("#sw-tags", { effect: "cards" });
+                    st = new Swiper("#sw-tags", { effect: "cards", slideShadows: false });
                 }
             }
         }
@@ -270,7 +290,7 @@
                 w.appendChild(createSlide(null, data));
             }
             if(su) su.destroy();
-            su = new Swiper("#sw-up", { effect: "cards" });
+            su = new Swiper("#sw-up", { effect: "cards", slideShadows: false });
         }
 
         function resetUpload() {
@@ -286,7 +306,7 @@
                 const token = prompt("GitHub Token:"); if(!token) return;
 
                 document.querySelectorAll('#w-up .swiper-slide').forEach((s, i) => {
-                    setTimeout(() => s.classList.add('fly-away'), i * 150);
+                    setTimeout(() => s.classList.add('fly-away'), i * 100);
                 });
 
                 setTimeout(async () => {
@@ -306,7 +326,7 @@
                     document.getElementById('g-ring').style.opacity = '0';
                     document.getElementById('g-done').style.transform = 'scale(1)';
                     setTimeout(() => location.reload(), 1500);
-                }, 1000);
+                }, 800);
             } else {
                 const s = activeTab === 'main' ? sm : st;
                 if(!s || !s.slides[s.activeIndex]) return;
