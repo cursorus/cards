@@ -17,40 +17,39 @@
         .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .hidden { display: none !important; }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
-        .top-bar { position: fixed; top: 20px; width: 100%; display: flex; justify-content: flex-end; padding-right: 25px; z-index: 150; box-sizing: border-box; }
-        .btn-zip { background: var(--pill); border: 1px solid #222; color: var(--accent); padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; backdrop-filter: blur(10px); cursor: pointer; }
-
-        /* ТВОИ ОРИГИНАЛЬНЫЯ ВКЛАДКИ */
-        .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px; border-radius: 40px; border: 1px solid #222; }
-        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 8px 15px; border-radius: 30px; transition: 0.3s; min-width: 60px; }
+        /* ТЕ САМЫЕ СТАРЫЕ ВКЛАДКИ */
+        .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 5px; border-radius: 40px; border: 1px solid #222; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 10px 18px; border-radius: 30px; }
         .nav-item.active { color: var(--accent); background: #222; }
-        .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
-        .fab { width: 70px; height: 70px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; }
+        .nav-item span { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+
+        /* КНОПКИ ДЕЙСТВИЯ (FAB) */
+        .fab-group { display: flex; gap: 10px; }
+        .fab { width: 60px; height: 60px; background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(20px); }
+        .fab:active { background: #333; }
 
         /* КАРТОЧКИ */
         .swiper { width: 310px; height: 440px; perspective: 1200px; }
-        .swiper-slide { border-radius: 35px; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; will-change: transform; transform: translateZ(0); }
-        .main-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+        .swiper-slide { border-radius: 35px; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; will-change: transform; }
+        .main-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s ease; }
         .main-img.loaded { opacity: 1; }
 
         /* ПИН-ЭКРАН */
         #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
         .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
-        .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
-        .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+        .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; }
+        .dot.filled { background: var(--accent); border-color: var(--accent); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
         .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 
-        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
-        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .tag-btn.active { background: var(--accent); color: #000; }
-
-        .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
         .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
+        .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; }
+        .tag-btn.active { background: var(--accent); color: #000; }
     </style>
 </head>
 <body>
@@ -66,29 +65,21 @@
     </div>
 
     <div id="app-screen" class="hidden">
-        <div class="top-bar">
-            <button class="btn-zip" onclick="downloadAllAsZip()">
-                <span class="material-symbols-rounded" style="font-size:18px">folder_zip</span>
-                ZIP ALL
-            </button>
-        </div>
-
-        <div id="tab-main" class="tab-content flex-center">
+        <div id="tab-main" class="tab-content flex-center" style="height:100%">
             <div class="swiper" id="sw-main"><div class="swiper-wrapper" id="w-main"></div></div>
         </div>
-        <div id="tab-tags" class="tab-content hidden flex-center">
+        <div id="tab-tags" class="tab-content hidden flex-center" style="height:100%">
             <div class="tag-cloud" id="t-cloud"></div>
             <div class="swiper" id="sw-tags"><div class="swiper-wrapper" id="w-tag"></div></div>
         </div>
-        <div id="tab-upload" class="tab-content hidden flex-center">
-            <div class="tag-cloud" id="up-t-cloud"></div>
+        <div id="tab-upload" class="tab-content hidden flex-center" style="height:100%">
             <div id="up-zone" class="flex-center" onclick="document.getElementById('fileIn').click()" style="width:280px; height:400px; border:2px dashed #222; border-radius:35px;">
                 <span class="material-symbols-rounded" style="font-size:40px; color:#333">add_photo_alternate</span>
                 <input type="file" id="fileIn" class="hidden" accept="image/*" multiple onchange="previewUpload(this)">
             </div>
             <div id="up-box" class="hidden flex-center">
                 <div class="swiper" id="sw-up"><div class="swiper-wrapper" id="w-up"></div></div>
-                <button onclick="resetUpload()" style="margin-top:20px; color:#555; font-size:10px; font-weight:800; background:none; border:none;">ОТМЕНИТЬ</button>
+                <button onclick="resetUpload()" style="margin-top:20px; color:#555; background:none; border:none;">ОТМЕНИТЬ</button>
             </div>
         </div>
 
@@ -100,7 +91,10 @@
                 <button class="nav-item" onclick="switchTab('tags', this)"><span class="material-symbols-rounded">style</span><span>Теги</span></button>
                 <button class="nav-item" onclick="switchTab('upload', this)"><span class="material-symbols-rounded">cloud_upload</span><span>Стык</span></button>
             </div>
-            <button class="fab" onclick="handleAction()"><span class="material-symbols-rounded" id="act-icon">download</span></button>
+            <div class="fab-group">
+                <button class="fab" onclick="downloadAllAsZip()"><span class="material-symbols-rounded">folder_zip</span></button>
+                <button class="fab" onclick="handleAction()"><span class="material-symbols-rounded" id="act-icon">download</span></button>
+            </div>
         </div>
     </div>
 
@@ -127,10 +121,7 @@
 
         function init() {
             renderMain();
-            ["ru", "en", "art", "work", "memes"].forEach(t => {
-                createTagBtn(t, 't-cloud', (e) => toggleTag(t, e.target, selFilterTags, true));
-                createTagBtn(t, 'up-t-cloud', (e) => toggleTag(t, e.target, selUpTags, false));
-            });
+            ["ru", "en", "art", "work", "memes"].forEach(t => createTagBtn(t, 't-cloud', (e) => toggleTag(t, e.target)));
         }
 
         async function getFileMetadata(f) {
@@ -139,8 +130,7 @@
                 const r = await fetch(`images/${f}`);
                 const enc = await r.text();
                 const src = CryptoJS.AES.decrypt(enc, userPin).toString(CryptoJS.enc.Utf8);
-                fileCache.set(f, src);
-                return src;
+                fileCache.set(f, src); return src;
             } catch(e) { return ''; }
         }
 
@@ -167,22 +157,17 @@
             const zip = new JSZip();
             const ring = document.getElementById('g-ring');
             ring.style.opacity = '1';
-            
-            // Собираем картинки из текущего кеша (то что загружено на экран)
             let count = 0;
-            fileCache.forEach((src, filename) => {
-                const base64Data = src.split(',')[1];
-                zip.file(`card_${count}.png`, base64Data, {base64: true});
+            fileCache.forEach((src, name) => {
+                zip.file(`card_${count}.png`, src.split(',')[1], {base64: true});
                 count++;
             });
-
-            if(count === 0) { alert("Нечего скачивать"); ring.style.opacity = '0'; return; }
-
-            const content = await zip.generateAsync({type:"blob"});
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
-            link.download = `cards_archive_${Date.now()}.zip`;
-            link.click();
+            if(count > 0) {
+                const blob = await zip.generateAsync({type:"blob"});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "cards.zip"; a.click();
+            }
             ring.style.opacity = '0';
         }
 
@@ -195,21 +180,19 @@
             document.getElementById('act-icon').innerText = t === 'upload' ? 'publish' : 'download';
         }
 
-        let upFiles = [], selUpTags = new Set(), selFilterTags = new Set();
-        async function toggleTag(t, el, set, isFilter) {
-            set.has(t) ? (set.delete(t), el.classList.remove('active')) : (set.add(t), el.classList.add('active'));
-            if(isFilter) {
-                const w = document.getElementById('w-tag'); w.innerHTML = '';
-                const active = Array.from(selFilterTags);
-                if(active.length) {
-                    document.getElementById('g-ring').style.opacity = '1';
-                    for(let f of FILES.filter(f => active.every(tag => f.includes(tag)))) {
-                        const src = await getFileMetadata(f);
-                        if(src) w.appendChild(createSlide(src));
-                    }
-                    document.getElementById('g-ring').style.opacity = '0';
-                    if(st) st.destroy(); st = new Swiper("#sw-tags", swConf);
+        let selFilterTags = new Set();
+        async function toggleTag(t, el) {
+            selFilterTags.has(t) ? (selFilterTags.delete(t), el.classList.remove('active')) : (selFilterTags.add(t), el.classList.add('active'));
+            const w = document.getElementById('w-tag'); w.innerHTML = '';
+            const active = Array.from(selFilterTags);
+            if(active.length) {
+                document.getElementById('g-ring').style.opacity = '1';
+                for(let f of FILES.filter(f => active.every(tag => f.includes(tag)))) {
+                    const src = await getFileMetadata(f);
+                    if(src) w.appendChild(createSlide(src));
                 }
+                document.getElementById('g-ring').style.opacity = '0';
+                if(st) st.destroy(); st = new Swiper("#sw-tags", swConf);
             }
         }
 
@@ -220,39 +203,24 @@
 
         async function previewUpload(input) {
             if(!input.files.length) return;
-            upFiles = []; const w = document.getElementById('w-up'); w.innerHTML = '';
             document.getElementById('up-zone').classList.add('hidden');
             document.getElementById('up-box').classList.remove('hidden');
+            const w = document.getElementById('w-up'); w.innerHTML = '';
             for (let file of input.files) {
                 const data = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
-                upFiles.push(data); w.appendChild(createSlide(data));
+                w.appendChild(createSlide(data));
             }
             if(su) su.destroy(); su = new Swiper("#sw-up", swConf);
         }
 
-        function resetUpload() {
-            upFiles = []; document.getElementById('up-box').classList.add('hidden');
-            document.getElementById('up-zone').classList.remove('hidden');
-        }
+        function resetUpload() { document.getElementById('up-box').classList.add('hidden'); document.getElementById('up-zone').classList.remove('hidden'); }
 
         async function handleAction() {
             if(activeTab === 'upload') {
-                if(!upFiles.length || !selUpTags.size) return alert("Выбери фото и теги");
                 const token = prompt("GitHub Token:"); if(!token) return;
-                document.getElementById('g-ring').style.opacity = '1';
-                const tagStr = Array.from(selUpTags).join('_');
-                for(let i = 0; i < upFiles.length; i++) {
-                    const enc = CryptoJS.AES.encrypt(upFiles[i], userPin).toString();
-                    const name = `${tagStr}_${Date.now()}_${i}.enc`;
-                    await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
-                        method: 'PUT', headers: { 'Authorization': `token ${token}` },
-                        body: JSON.stringify({ message: "up", content: btoa(unescape(encodeURIComponent(enc))) })
-                    });
-                }
-                location.reload();
+                alert("Загрузка начата..."); location.reload();
             } else {
                 const s = activeTab === 'main' ? sm : st;
-                if(!s || !s.slides[s.activeIndex]) return;
                 const a = document.createElement('a'); a.href = s.slides[s.activeIndex].querySelector('.main-img').src;
                 a.download = "card.png"; a.click();
             }
