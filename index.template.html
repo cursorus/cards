@@ -17,33 +17,13 @@
 
         /* НАВИГАЦИЯ — ВЫСОТА 70PX */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-pill { 
-            display: flex; 
-            background: var(--pill); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px); 
-            height: var(--nav-h); 
-            padding: 0 8px; 
-            border-radius: 40px; 
-            border: 1px solid #222; 
-            align-items: center;
-            box-sizing: border-box;
-        }
-        .nav-item { 
-            background: none; border: none; color: var(--gray); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 4px; cursor: pointer; height: 56px; min-width: 70px; border-radius: 30px; transition: 0.3s; 
-        }
+        .nav-pill { display: flex; background: var(--pill); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); height: var(--nav-h); padding: 0 8px; border-radius: 40px; border: 1px solid #222; align-items: center; box-sizing: border-box; }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; height: 56px; min-width: 70px; border-radius: 30px; transition: 0.3s; }
         .nav-item.active { color: var(--accent); background: #222; }
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         
         .action-group { display: flex; gap: 10px; }
-        .fab { 
-            width: var(--nav-h); height: var(--nav-h); 
-            background: var(--pill); color: #fff; border-radius: 50%; 
-            border: 1px solid #222; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        }
+        .fab { width: var(--nav-h); height: var(--nav-h); background: var(--pill); color: #fff; border-radius: 50%; border: 1px solid #222; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
 
         /* КАРТОЧКА */
         .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
@@ -56,45 +36,58 @@
             align-items: center; 
             justify-content: center; 
             will-change: transform;
-            /* Чтобы на старых iOS не вылезали углы при трансформациях */
+            /* Маска для старых iOS, чтобы углы не вылезали */
             mask-image: -webkit-radial-gradient(white, black);
+            /* Легкая тень карточке для объема */
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
         }
         
-        /* СЛОИ И ЗАКРУГЛЕНИЕ */
+        /* Контейнер для цветных фонов */
         .card-layer-bg { 
             position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; 
             border-radius: inherit; overflow: hidden; 
         }
         .bg-half { flex: 1; width: 100%; }
-        
-        /* ФИЛЬТР НАЛОЖЕНИЯ */
-        .card-layer-overlay { 
-            position: absolute; inset: 0; 
-            background: url('cardbg.png') center/cover no-repeat; 
-            z-index: 2; 
-            mix-blend-mode: difference; /* Работает как инверсия: видно и на белом, и на черном */
-            opacity: 0.8; 
-            pointer-events: none;
-            border-radius: inherit;
+
+        /* --- УМНАЯ ТЕКСТУРА (ДВОЙНОЙ СЛОЙ) --- */
+        /* Общие стили псевдоэлементов-текстур */
+        .card-layer-bg::before, .card-layer-bg::after {
+            content: ''; position: absolute; inset: 0;
+            background: url('cardbg.png') center/cover no-repeat;
+            pointer-events: none; border-radius: inherit;
         }
-        
-        .main-img { position: relative; z-index: 3; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s; }
+        /* Слой 1: Для ТЕМНЫХ и ЦВЕТНЫХ фонов (оставляет белую текстуру) */
+        .card-layer-bg::before {
+            z-index: 2;
+            mix-blend-mode: soft-light; /* Мягкое наложение, хорошо смотрится на цветах */
+            opacity: 0.8;
+            filter: brightness(1.2) contrast(1.1); /* Делаем белое чуть ярче */
+        }
+        /* Слой 2: Для СВЕТЛЫХ фонов (инвертирует текстуру в черную) */
+        .card-layer-bg::after {
+            z-index: 3;
+            /* Превращаем белую PNG в черную PNG */
+            filter: invert(1) grayscale(1); 
+            mix-blend-mode: multiply; /* Умножение - лучшее для черного на белом */
+            opacity: 0.6; /* Чуть прозрачнее, чтобы черный не был слишком грубым */
+        }
+        /* --------------------------------------- */
+
+        .main-img { position: relative; z-index: 4; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s; }
         .main-img.fit-cover { object-fit: cover; }
         .main-img.fit-contain { object-fit: contain; }
         .main-img.loaded { opacity: 1; }
 
-        /* ПИН-ЭКРАН */
+        /* ПИН-ЭКРАН и ОСТАЛЬНОЕ (без изменений) */
         #auth-screen { z-index: 1000; position: fixed; inset: 0; background: var(--bg); }
         .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
         .dot { width: 14px; height: 14px; border: 2px solid #333; border-radius: 50%; transition: 0.3s; }
         .dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
         .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; }
         .key { width: 75px; height: 75px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-
         .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; width: 90%; }
         .tag-btn { background: #111; color: #555; border: 1px solid #222; padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .tag-btn.active { background: var(--accent); color: #000; }
-        
         .tab-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         #global-status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 200; }
         .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; opacity: 0; }
@@ -217,12 +210,13 @@
             const slide = document.createElement('div'); slide.className = 'swiper-slide';
             
             if (!data.isVert) {
+                // Текстуры теперь накладываются через CSS псевдоэлементы на этот контейнер
                 const bg = document.createElement('div'); bg.className = 'card-layer-bg';
                 const t = document.createElement('div'); t.className = 'bg-half'; t.style.background = data.topColor;
                 const b = document.createElement('div'); b.className = 'bg-half'; b.style.background = data.bottomColor;
-                const overlay = document.createElement('div'); overlay.className = 'card-layer-overlay';
+                // Убрали отдельный div card-layer-overlay
                 bg.append(t, b);
-                slide.append(bg, overlay);
+                slide.append(bg);
             }
 
             const img = document.createElement('img');
@@ -238,15 +232,9 @@
             document.getElementById('g-ring').style.opacity = '1';
             const encFiles = FILES.filter(x => x.endsWith('.enc'));
             let items = [];
-            for(let f of encFiles) {
-                const d = await getFileData(f);
-                if(d) items.push(d);
-            }
+            for(let f of encFiles) { const d = await getFileData(f); if(d) items.push(d); }
             let sorted = [];
-            TAG_LIST.forEach(tag => {
-                const group = items.filter(it => it.tags.includes(tag));
-                sorted.push(...group.filter(it => it.isVert), ...group.filter(it => !it.isVert));
-            });
+            TAG_LIST.forEach(tag => { const group = items.filter(it => it.tags.includes(tag)); sorted.push(...group.filter(it => it.isVert), ...group.filter(it => !it.isVert)); });
             const uniqueSorted = [...new Map(sorted.map(item => [item.src, item])).values()];
             uniqueSorted.forEach(d => w.appendChild(createSlide(d)));
             document.getElementById('g-ring').style.opacity = '0';
@@ -279,53 +267,11 @@
             document.getElementById('act-icon').innerText = t === 'upload' ? 'publish' : 'download';
         }
 
-        function createTagBtn(t, cont, fn) {
-            const b = document.createElement('button'); b.className = 'tag-btn'; b.innerText = t.toUpperCase();
-            b.onclick = fn; document.getElementById(cont).appendChild(b);
-        }
-
-        async function previewUpload(input) {
-            if(!input.files.length) return;
-            document.getElementById('up-zone').classList.add('hidden');
-            document.getElementById('up-box').classList.remove('hidden');
-            const w = document.getElementById('w-up'); w.innerHTML = '';
-            for (let file of input.files) {
-                const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
-                const info = await getImageInfo(dataUrl);
-                w.appendChild(createSlide({ src: dataUrl, ...info }));
-            }
-            if(su) su.destroy(); su = new Swiper("#sw-up", swConf);
-        }
-
+        function createTagBtn(t, cont, fn) { const b = document.createElement('button'); b.className = 'tag-btn'; b.innerText = t.toUpperCase(); b.onclick = fn; document.getElementById(cont).appendChild(b); }
+        async function previewUpload(input) { if(!input.files.length) return; document.getElementById('up-zone').classList.add('hidden'); document.getElementById('up-box').classList.remove('hidden'); const w = document.getElementById('w-up'); w.innerHTML = ''; for (let file of input.files) { const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); }); const info = await getImageInfo(dataUrl); w.appendChild(createSlide({ src: dataUrl, ...info })); } if(su) su.destroy(); su = new Swiper("#sw-up", swConf); }
         function resetUpload() { document.getElementById('up-box').classList.add('hidden'); document.getElementById('up-zone').classList.remove('hidden'); }
-
-        async function downloadAllAsZip() {
-            const zip = new JSZip();
-            const ring = document.getElementById('g-ring');
-            ring.style.opacity = '1';
-            let count = 0;
-            fileCache.forEach((data) => {
-                zip.file(`card_${count}.png`, data.src.split(',')[1], {base64: true});
-                count++;
-            });
-            if(count > 0) {
-                const blob = await zip.generateAsync({type:"blob"});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-                a.download = "cards.zip"; a.click();
-            }
-            ring.style.opacity = '0';
-        }
-
-        async function handleAction() {
-            if(activeTab === 'upload') {
-                prompt("GitHub Token:"); alert("Загрузка..."); location.reload();
-            } else {
-                const activeSwiper = (activeTab === 'main') ? sm : st;
-                if(!activeSwiper || !activeSwiper.slides.length) return;
-                const img = activeSwiper.slides[activeSwiper.activeIndex].querySelector('.main-img');
-                const a = document.createElement('a'); a.href = img.src; a.download = "card.png"; a.click();
-            }
-        }
+        async function downloadAllAsZip() { const zip = new JSZip(); const ring = document.getElementById('g-ring'); ring.style.opacity = '1'; let count = 0; fileCache.forEach((data) => { zip.file(`card_${count}.png`, data.src.split(',')[1], {base64: true}); count++; }); if(count > 0) { const blob = await zip.generateAsync({type:"blob"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "cards.zip"; a.click(); } ring.style.opacity = '0'; }
+        async function handleAction() { if(activeTab === 'upload') { prompt("GitHub Token:"); alert("Загрузка..."); location.reload(); } else { const activeSwiper = (activeTab === 'main') ? sm : st; if(!activeSwiper || !activeSwiper.slides.length) return; const img = activeSwiper.slides[activeSwiper.activeIndex].querySelector('.main-img'); const a = document.createElement('a'); a.href = img.src; a.download = "card.png"; a.click(); } }
     </script>
 </body>
 </html>
