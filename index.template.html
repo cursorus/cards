@@ -10,81 +10,72 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        :root { --bg: #050505; --accent: #fff; --pill: rgba(20,20,20,0.8); --gray: #555; --nav-h: 70px; }
+        :root { --bg: #050505; --accent: #fff; --pill: rgba(20,20,20,0.8); --gray: #555; --nav-h: 70px; --radius: 35px; }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; }
         .flex-center { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .hidden { display: none !important; }
 
-        /* НАВИГАЦИЯ */
+        /* НАВИГАЦИЯ — ВЫСОТА 70PX */
         .nav-container { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        
-        /* Вкладки теперь высотой 70px */
         .nav-pill { 
             display: flex; 
             background: var(--pill); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px); 
             height: var(--nav-h); 
-            padding: 0 10px; 
+            padding: 0 8px; 
             border-radius: 40px; 
             border: 1px solid #222; 
             align-items: center;
+            box-sizing: border-box;
         }
-        
         .nav-item { 
-            background: none; 
-            border: none; 
-            color: var(--gray); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            gap: 4px; 
-            cursor: pointer; 
-            height: 54px; /* Чуть меньше общей высоты для отступа внутри */
-            min-width: 75px; 
-            border-radius: 30px; 
-            transition: 0.3s; 
+            background: none; border: none; color: var(--gray); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 4px; cursor: pointer; height: 56px; min-width: 70px; border-radius: 30px; transition: 0.3s; 
         }
         .nav-item.active { color: var(--accent); background: #222; }
         .nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
-        .nav-item .material-symbols-rounded { font-size: 22px; }
         
         .action-group { display: flex; gap: 10px; }
-        
-        /* Кнопки-кругляши */
         .fab { 
-            width: var(--nav-h); 
-            height: var(--nav-h); 
-            background: var(--pill); 
-            color: #fff; 
-            border-radius: 50%; 
-            border: 1px solid #222; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4); 
-            cursor: pointer; 
-            backdrop-filter: blur(20px);
+            width: var(--nav-h); height: var(--nav-h); 
+            background: var(--pill); color: #fff; border-radius: 50%; 
+            border: 1px solid #222; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         }
 
         /* КАРТОЧКА */
         .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
-        .swiper-slide { border-radius: 35px; background: #000; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; will-change: transform; }
+        .swiper-slide { 
+            border-radius: var(--radius); 
+            background: #000; 
+            overflow: hidden; 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            will-change: transform;
+            /* Чтобы на старых iOS не вылезали углы при трансформациях */
+            mask-image: -webkit-radial-gradient(white, black);
+        }
         
-        /* СЛОИ КАРТОЧКИ */
-        .card-layer-bg { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; }
+        /* СЛОИ И ЗАКРУГЛЕНИЕ */
+        .card-layer-bg { 
+            position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; 
+            border-radius: inherit; overflow: hidden; 
+        }
         .bg-half { flex: 1; width: 100%; }
         
-        /* Улучшенная текстура */
+        /* ФИЛЬТР НАЛОЖЕНИЯ */
         .card-layer-overlay { 
-            position: absolute; 
-            inset: 0; 
+            position: absolute; inset: 0; 
             background: url('cardbg.png') center/cover no-repeat; 
             z-index: 2; 
-            mix-blend-mode: soft-light; /* Изменено с overlay на soft-light */
-            opacity: 0.5; 
+            mix-blend-mode: difference; /* Работает как инверсия: видно и на белом, и на черном */
+            opacity: 0.8; 
             pointer-events: none;
+            border-radius: inherit;
         }
         
         .main-img { position: relative; z-index: 3; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s; }
@@ -202,11 +193,6 @@
             } catch(e) { return null; }
         }
 
-        // Фикс цвета для корректного наложения текстуры
-        function clampColor(c) {
-            return Math.max(20, Math.min(235, c));
-        }
-
         function getImageInfo(src) {
             return new Promise(res => {
                 const img = new Image();
@@ -219,8 +205,8 @@
                     const bottom = ctx.getImageData(img.width/2, img.height - 2, 1, 1).data;
                     res({
                         isVert: img.height / img.width > 1.2,
-                        topColor: `rgb(${clampColor(top[0])},${clampColor(top[1])},${clampColor(top[2])})`,
-                        bottomColor: `rgb(${clampColor(bottom[0])},${clampColor(bottom[1])},${clampColor(bottom[2])})`
+                        topColor: `rgb(${top[0]},${top[1]},${top[2]})`,
+                        bottomColor: `rgb(${bottom[0]},${bottom[1]},${bottom[2]})`
                     });
                 };
                 img.src = src;
@@ -250,25 +236,19 @@
         async function renderMain() {
             const w = document.getElementById('w-main'); w.innerHTML = '';
             document.getElementById('g-ring').style.opacity = '1';
-            
-            let items = [];
             const encFiles = FILES.filter(x => x.endsWith('.enc'));
+            let items = [];
             for(let f of encFiles) {
                 const d = await getFileData(f);
                 if(d) items.push(d);
             }
-
             let sorted = [];
             TAG_LIST.forEach(tag => {
                 const group = items.filter(it => it.tags.includes(tag));
-                const vert = group.filter(it => it.isVert);
-                const horiz = group.filter(it => !it.isVert);
-                sorted.push(...vert, ...horiz);
+                sorted.push(...group.filter(it => it.isVert), ...group.filter(it => !it.isVert));
             });
-            
             const uniqueSorted = [...new Map(sorted.map(item => [item.src, item])).values()];
             uniqueSorted.forEach(d => w.appendChild(createSlide(d)));
-            
             document.getElementById('g-ring').style.opacity = '0';
             if(sm) sm.destroy(); sm = new Swiper("#sw-main", swConf);
         }
@@ -283,9 +263,7 @@
                 if(activeTags.length) {
                     document.getElementById('g-ring').style.opacity = '1';
                     const filtered = Array.from(fileCache.values()).filter(it => activeTags.every(tag => it.tags.includes(tag)));
-                    const vert = filtered.filter(it => it.isVert);
-                    const horiz = filtered.filter(it => !it.isVert);
-                    [...vert, ...horiz].forEach(d => w.appendChild(createSlide(d)));
+                    [...filtered.filter(it => it.isVert), ...filtered.filter(it => !it.isVert)].forEach(d => w.appendChild(createSlide(d)));
                     document.getElementById('g-ring').style.opacity = '0';
                     if(st) st.destroy(); st = new Swiper("#sw-tags", swConf);
                 }
