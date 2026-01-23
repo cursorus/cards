@@ -39,21 +39,12 @@
             border-radius: var(--radius); background: #111; overflow: hidden; 
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9);
-            position: relative; /* Для позиционирования слоев */
         }
         
-        /* КАРТИНКА И ФОН (ВЕРНУЛ СТАРУЮ СИСТЕМУ) */
-        .card-layer-bg { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; pointer-events: none; }
+        /* КАРТИНКА И ФОН */
+        .card-layer-bg { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; }
         .bg-half { flex: 1; width: 100%; position: relative; transition: background 0.3s; }
-        
-        /* Тот самый оверлей, который был нужен */
-        .card-layer-overlay { 
-            position: absolute; inset: 0; 
-            background: url('cardbg.png') center/cover; 
-            opacity: 0.2; 
-            mix-blend-mode: overlay; 
-        }
-
+        .card-layer-overlay { position: absolute; inset: 0; background: url('cardbg.png') center/cover; opacity: 0.2; mix-blend-mode: overlay; }
         .main-img { position: relative; z-index: 5; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; }
         .main-img.fit-cover { object-fit: cover; }
         .main-img.visible { opacity: 1; }
@@ -102,11 +93,11 @@
         </div>
 
         <div id="view-up" class="tab-content flex-center">
-             <div onclick="document.getElementById('fIn').click()" style="width:260px; height:380px; border:2px dashed #333; border-radius:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; cursor: pointer;">
+             <div onclick="document.getElementById('fIn').click()" style="width:260px; height:380px; border:2px dashed #333; border-radius:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555;">
                 <span class="material-symbols-rounded" style="font-size:40px">add</span>
                 <span style="font-size:12px; margin-top:10px; font-weight:700;">ДОБАВИТЬ ФАЙЛЫ</span>
              </div>
-             <input type="file" id="fIn" hidden multiple accept="image/*,.enc">
+             <input type="file" id="fIn" hidden multiple accept="image/*">
         </div>
 
         <div class="nav-container">
@@ -124,137 +115,92 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
         // --- НАСТРОЙКИ ---
-        const PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // Пароль: 1234
-        const FILES = typeof ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"] !== 'undefined' ? ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"] : []; 
+        const PIN_HASH = "4225466f46976e5877d0c8f7a77eafbf97a92841dedabae705816fa4c76e033f"; 
+        const FILES = typeof ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"] ! == 'undefined' ? ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"] : []
+        
+        // ! ВАЖНО ! СЮДА ПИШИ ТЕГИ КОТОРЫЕ ТЕБЕ НУЖНЫ. 
+        // СКРИПТ БУДЕТ ИСКАТЬ ИХ В ИМЕНИ ФАЙЛА (img_funny_memes.enc -> найдет funny и memes)
         const ALLOWED_TAGS = ["funny", "arguments", "narkoman", "parents", "art", "personal", "screenshot"]; 
 
         let pin = "", cache = [], swMain, swTags;
         
         // --- PIN LOGIC ---
-        window.kp = function(n) {
+        function kp(n) {
             if(n==='C') pin = ""; else if(pin.length < 4) pin += n;
             document.querySelectorAll('.dot').forEach((d,i) => d.className = i<pin.length?'dot filled':'dot');
             if(pin.length === 4) checkPin();
         }
         
         async function checkPin() {
-            const inputHash = CryptoJS.SHA256(pin).toString().toLowerCase();
-            const targetHash = PIN_HASH.toLowerCase();
-
-            if(inputHash === targetHash) {
+            if(CryptoJS.SHA256(pin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('loading-overlay').classList.remove('hidden');
-                setTimeout(startApp, 300);
+                setTimeout(startApp, 300); // Даем время UI обновиться
             } else {
                 pin=""; document.querySelectorAll('.dot').forEach(d=>d.className='dot');
-                if(navigator.vibrate) navigator.vibrate(200);
+                navigator.vibrate?.(200);
             }
         }
 
         // --- CORE LOGIC ---
         async function startApp() {
-            // 1. Инициализация обработки загрузки файлов (ЭТОГО НЕ БЫЛО В ПРОШЛЫЙ РАЗ)
-            const fileInput = document.getElementById('fIn');
-            fileInput.addEventListener('change', handleFileUpload);
-
             const txt = document.getElementById('load-text');
             const wr = document.getElementById('wr-main');
             let loadedCount = 0;
 
+            // 1. Фильтруем файлы (берем только .enc)
             const encFiles = FILES.filter(f => f.endsWith('.enc'));
-            
-            // Если файлов нет, не крашимся, а просто запускаем интерфейс
             if(encFiles.length === 0) {
-                txt.innerText = "NO SERVER FILES";
-                setTimeout(finishLoad, 500);
-            } else {
-                for (let f of encFiles) {
-                    try {
-                        txt.innerText = `DECRYPTING ${loadedCount + 1}/${encFiles.length}`;
-                        const res = await fetch(`images/${f}`);
-                        if(!res.ok) throw new Error('404');
-                        const blob = await res.text();
-                        
-                        const src = CryptoJS.AES.decrypt(blob, pin).toString(CryptoJS.enc.Utf8);
-                        if(!src.startsWith('data:image')) throw new Error('Bad Decrypt');
-
-                        const meta = await analyzeImage(src);
-                        const foundTags = ALLOWED_TAGS.filter(tag => f.toLowerCase().includes(tag));
-                        const item = { id: f, src, ...meta, tags: foundTags };
-                        cache.push(item);
-                        wr.appendChild(buildSlide(item));
-                        loadedCount++;
-                    } catch (e) {
-                        console.warn(`Skip ${f}:`, e);
-                    }
-                }
-                setTimeout(finishLoad, 100);
+                alert("Файлов нет! Проверь переменную ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"]");
+                finishLoad(); 
+                return;
             }
+
+            // 2. Обрабатываем файлы
+            for (let f of encFiles) {
+                try {
+                    txt.innerText = `DECRYPTING ${loadedCount + 1}/${encFiles.length}`;
+                    const res = await fetch(`images/${f}`);
+                    if(!res.ok) throw new Error('404');
+                    const blob = await res.text();
+                    
+                    // Дешифровка
+                    const src = CryptoJS.AES.decrypt(blob, pin).toString(CryptoJS.enc.Utf8);
+                    if(!src.startsWith('data:image')) throw new Error('Bad Decrypt');
+
+                    // Анализ картинки (цвета + ориентация)
+                    const meta = await analyzeImage(src);
+                    
+                    // Поиск тегов из разрешенного списка
+                    const foundTags = ALLOWED_TAGS.filter(tag => f.toLowerCase().includes(tag));
+
+                    const item = { id: f, src, ...meta, tags: foundTags };
+                    cache.push(item);
+                    
+                    // Сразу добавляем в DOM главного слайдера
+                    wr.appendChild(buildSlide(item));
+                    loadedCount++;
+
+                } catch (e) {
+                    console.warn(`Skip ${f}:`, e);
+                }
+            }
+
+            // 3. Создаем кнопки тегов
+            renderTagButtons();
+
+            // 4. Запускаем Swiper и скрываем лоадер
+            finishLoad();
         }
 
         function finishLoad() {
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('loading-overlay').classList.add('hidden');
-            renderTagButtons();
-            // Задержка чтобы DOM обновился
-            setTimeout(() => { swMain = initSwiper('#sw-main'); }, 100);
-        }
-
-        // --- НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ ---
-        async function handleFileUpload(e) {
-            const files = Array.from(e.target.files);
-            if(!files.length) return;
-
-            const wr = document.getElementById('wr-main');
             
-            // Переключаемся на главную вкладку, чтобы видеть результат
-            tab('main', document.querySelector('.nav-item:first-child'));
-
-            for (let file of files) {
-                try {
-                    // Читаем файл
-                    const src = await readFileAsDataURL(file);
-                    
-                    // Если это .enc файл, пробуем расшифровать текущим пинкодом
-                    let finalSrc = src;
-                    if(file.name.endsWith('.enc')) {
-                        // Для .enc нужно читать как текст, но readFileAsDataURL вернет base64. 
-                        // Упростим: допустим пользователь грузит обычные фото или расшифрованные.
-                        // Если вы грузите именно ЗАШИФРОВАННЫЙ ТЕКСТ через input, нужно сложнее.
-                        // Но обычно через Upload кидают просто фотки.
-                    }
-
-                    const meta = await analyzeImage(finalSrc);
-                    // Ищем теги в имени загруженного файла
-                    const foundTags = ALLOWED_TAGS.filter(tag => file.name.toLowerCase().includes(tag));
-                    
-                    const item = { id: file.name, src: finalSrc, ...meta, tags: foundTags };
-                    cache.push(item);
-                    
-                    // Добавляем слайд
-                    const slide = buildSlide(item);
-                    wr.appendChild(slide);
-
-                } catch (err) {
-                    console.error("File load error", err);
-                }
-            }
-
-            // Обновляем свайпер и прыгаем в конец
-            if(swMain) {
-                swMain.update();
-                swMain.slideTo(swMain.slides.length - 1);
-            }
-            renderTagButtons();
-        }
-
-        function readFileAsDataURL(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
+            // Инициализация Swiper с задержкой для надежности
+            setTimeout(() => {
+                swMain = initSwiper('#sw-main');
+            }, 100);
         }
 
         function analyzeImage(src) {
@@ -268,35 +214,31 @@
                         const cvs = document.createElement('canvas');
                         cvs.width = 1; cvs.height = 1;
                         const ctx = cvs.getContext('2d');
+                        // Цвет сверху
                         ctx.drawImage(img, img.width/2, 0, 1, 1, 0, 0, 1, 1);
                         const t = ctx.getImageData(0,0,1,1).data;
                         tc = `rgb(${t[0]},${t[1]},${t[2]})`;
+                        // Цвет снизу
                         ctx.drawImage(img, img.width/2, img.height-1, 1, 1, 0, 0, 1, 1);
                         const b = ctx.getImageData(0,0,1,1).data;
                         bc = `rgb(${b[0]},${b[1]},${b[2]})`;
-                    } catch(e) { }
+                    } catch(e) { /* Игнор CORS ошибок канваса */ }
                     resolve({ isVert, tc, bc });
                 };
-                img.onerror = () => resolve({ isVert: true, tc:'#000', bc:'#000' });
+                img.onerror = () => resolve({ isVert: true, tc:'#000', bc:'#000' }); // Fallback
                 img.src = src;
             });
         }
 
-        // --- ВЕРНУЛ СТАРУЮ СИСТЕМУ СЛОЕВ ---
         function buildSlide(data) {
             const div = document.createElement('div');
             div.className = 'swiper-slide';
             
             let bgHTML = '';
-            // Если картинка горизонтальная, делаем красивый фон
             if(!data.isVert) {
                 bgHTML = `<div class="card-layer-bg">
-                    <div class="bg-half" style="background:${data.tc}">
-                        <div class="card-layer-overlay"></div>
-                    </div>
-                    <div class="bg-half" style="background:${data.bc}">
-                        <div class="card-layer-overlay"></div>
-                    </div>
+                    <div class="bg-half" style="background:${data.tc}"><div class="card-layer-overlay"></div></div>
+                    <div class="bg-half" style="background:${data.bc}"><div class="card-layer-overlay"></div></div>
                 </div>`;
             }
             
@@ -317,15 +259,17 @@
 
         // --- TAG SYSTEM ---
         let activeTags = new Set();
+        
         function renderTagButtons() {
             const c = document.getElementById('tag-cloud');
             c.innerHTML = '';
+            // Показываем только те теги, которые реально нашлись в файлах
             const usedTags = [...new Set(cache.flatMap(x => x.tags))];
+            
             usedTags.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'tag-btn';
                 b.innerText = t;
-                if(activeTags.has(t)) b.classList.add('active'); // Сохраняем состояние
                 b.onclick = () => filterByTag(t, b);
                 c.appendChild(b);
             });
@@ -354,13 +298,14 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
             document.getElementById('view-'+name).classList.add('active-tab');
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
+            btn.classList.add('active');
         }
 
         function saveActive() {
             const isMain = document.getElementById('view-main').classList.contains('active-tab');
             const sw = isMain ? swMain : swTags;
             if(!sw || !sw.slides.length) return;
+            
             const img = sw.slides[sw.activeIndex].querySelector('img');
             const a = document.createElement('a');
             a.href = img.src;
