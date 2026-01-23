@@ -115,30 +115,37 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
         // --- НАСТРОЙКИ ---
+        // Пароль: 1234
         const PIN_HASH = "4225466f46976e5877d0c8f7a77eafbf97a92841dedabae705816fa4c76e033f"; 
-        const FILES = ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"]; 
         
-        // ! ВАЖНО ! СЮДА ПИШИ ТЕГИ КОТОРЫЕ ТЕБЕ НУЖНЫ. 
-        // СКРИПТ БУДЕТ ИСКАТЬ ИХ В ИМЕНИ ФАЙЛА (img_funny_memes.enc -> найдет funny и memes)
+        // ВОТ ТУТ БЫЛА ОШИБКА. Добавил проверку, чтобы код не ломался, если файлов нет.
+        const FILES = typeof ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"] !== 'undefined' ? ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"] : []; 
+        
         const ALLOWED_TAGS = ["funny", "arguments", "narkoman", "parents", "art", "personal", "screenshot"]; 
 
         let pin = "", cache = [], swMain, swTags;
         
         // --- PIN LOGIC ---
-        function kp(n) {
+        // Функция теперь глобальная (window.kp), чтобы HTML ее точно увидел
+        window.kp = function(n) {
             if(n==='C') pin = ""; else if(pin.length < 4) pin += n;
             document.querySelectorAll('.dot').forEach((d,i) => d.className = i<pin.length?'dot filled':'dot');
             if(pin.length === 4) checkPin();
         }
         
         async function checkPin() {
-            if(CryptoJS.SHA256(pin).toString() === PIN_HASH.replace(/['" ]/g, '')) {
+            // Приводим все к нижнему регистру для надежности
+            const inputHash = CryptoJS.SHA256(pin).toString().toLowerCase();
+            const targetHash = PIN_HASH.toLowerCase();
+
+            if(inputHash === targetHash) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('loading-overlay').classList.remove('hidden');
-                setTimeout(startApp, 300); // Даем время UI обновиться
+                setTimeout(startApp, 300); 
             } else {
-                pin=""; document.querySelectorAll('.dot').forEach(d=>d.className='dot');
-                navigator.vibrate?.(200);
+                pin=""; 
+                document.querySelectorAll('.dot').forEach(d=>d.className='dot');
+                if(navigator.vibrate) navigator.vibrate(200);
             }
         }
 
@@ -148,15 +155,15 @@
             const wr = document.getElementById('wr-main');
             let loadedCount = 0;
 
-            // 1. Фильтруем файлы (берем только .enc)
             const encFiles = FILES.filter(f => f.endsWith('.enc'));
+            
+            // Если файлов нет, просто показываем пустой интерфейс
             if(encFiles.length === 0) {
-                alert("Файлов нет! Проверь переменную ["ru_arguments_1767868277325_12.enc","ru_arguments_1767868274034_9.enc","ru_arguments_1767868269647_5.enc","ru_arguments_1767868273062_8.enc","ru_arguments_1767868275164_10.enc","funny_1767871819421_0.enc","ru_arguments_1767868271940_7.enc","ru_arguments_1767868276175_11.enc","ru_arguments_1767868270752_6.enc","ru_arguments_1767868257796_0.enc","ru_arguments_1767868268258_4.enc","ru_arguments_1767868266905_3.enc","ru_arguments_1767868265015_2.enc","ru_arguments_1767868263202_1.enc"]");
-                finishLoad(); 
+                txt.innerText = "NO FILES FOUND";
+                setTimeout(finishLoad, 1000);
                 return;
             }
 
-            // 2. Обрабатываем файлы
             for (let f of encFiles) {
                 try {
                     txt.innerText = `DECRYPTING ${loadedCount + 1}/${encFiles.length}`;
@@ -164,43 +171,28 @@
                     if(!res.ok) throw new Error('404');
                     const blob = await res.text();
                     
-                    // Дешифровка
                     const src = CryptoJS.AES.decrypt(blob, pin).toString(CryptoJS.enc.Utf8);
                     if(!src.startsWith('data:image')) throw new Error('Bad Decrypt');
 
-                    // Анализ картинки (цвета + ориентация)
                     const meta = await analyzeImage(src);
-                    
-                    // Поиск тегов из разрешенного списка
                     const foundTags = ALLOWED_TAGS.filter(tag => f.toLowerCase().includes(tag));
-
                     const item = { id: f, src, ...meta, tags: foundTags };
                     cache.push(item);
-                    
-                    // Сразу добавляем в DOM главного слайдера
                     wr.appendChild(buildSlide(item));
                     loadedCount++;
-
                 } catch (e) {
                     console.warn(`Skip ${f}:`, e);
                 }
             }
 
-            // 3. Создаем кнопки тегов
             renderTagButtons();
-
-            // 4. Запускаем Swiper и скрываем лоадер
             finishLoad();
         }
 
         function finishLoad() {
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('loading-overlay').classList.add('hidden');
-            
-            // Инициализация Swiper с задержкой для надежности
-            setTimeout(() => {
-                swMain = initSwiper('#sw-main');
-            }, 100);
+            setTimeout(() => { swMain = initSwiper('#sw-main'); }, 100);
         }
 
         function analyzeImage(src) {
@@ -214,18 +206,16 @@
                         const cvs = document.createElement('canvas');
                         cvs.width = 1; cvs.height = 1;
                         const ctx = cvs.getContext('2d');
-                        // Цвет сверху
                         ctx.drawImage(img, img.width/2, 0, 1, 1, 0, 0, 1, 1);
                         const t = ctx.getImageData(0,0,1,1).data;
                         tc = `rgb(${t[0]},${t[1]},${t[2]})`;
-                        // Цвет снизу
                         ctx.drawImage(img, img.width/2, img.height-1, 1, 1, 0, 0, 1, 1);
                         const b = ctx.getImageData(0,0,1,1).data;
                         bc = `rgb(${b[0]},${b[1]},${b[2]})`;
-                    } catch(e) { /* Игнор CORS ошибок канваса */ }
+                    } catch(e) { }
                     resolve({ isVert, tc, bc });
                 };
-                img.onerror = () => resolve({ isVert: true, tc:'#000', bc:'#000' }); // Fallback
+                img.onerror = () => resolve({ isVert: true, tc:'#000', bc:'#000' });
                 img.src = src;
             });
         }
@@ -233,7 +223,6 @@
         function buildSlide(data) {
             const div = document.createElement('div');
             div.className = 'swiper-slide';
-            
             let bgHTML = '';
             if(!data.isVert) {
                 bgHTML = `<div class="card-layer-bg">
@@ -241,7 +230,6 @@
                     <div class="bg-half" style="background:${data.bc}"><div class="card-layer-overlay"></div></div>
                 </div>`;
             }
-            
             div.innerHTML = `${bgHTML}<img src="${data.src}" class="main-img ${data.isVert?'fit-cover':'fit-contain'} visible">`;
             return div;
         }
@@ -259,13 +247,10 @@
 
         // --- TAG SYSTEM ---
         let activeTags = new Set();
-        
         function renderTagButtons() {
             const c = document.getElementById('tag-cloud');
             c.innerHTML = '';
-            // Показываем только те теги, которые реально нашлись в файлах
             const usedTags = [...new Set(cache.flatMap(x => x.tags))];
-            
             usedTags.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'tag-btn';
@@ -278,17 +263,12 @@
         function filterByTag(tag, btn) {
             if(activeTags.has(tag)) activeTags.delete(tag); else activeTags.add(tag);
             btn.classList.toggle('active');
-            
             const wr = document.getElementById('wr-tags');
             wr.innerHTML = '';
-            
             if(activeTags.size > 0) {
-                const filtered = cache.filter(item => 
-                    [...activeTags].every(reqTag => item.tags.includes(reqTag))
-                );
+                const filtered = cache.filter(item => [...activeTags].every(reqTag => item.tags.includes(reqTag)));
                 filtered.forEach(item => wr.appendChild(buildSlide(item)));
             }
-            
             if(swTags) swTags.destroy();
             swTags = initSwiper('#sw-tags');
         }
@@ -305,7 +285,6 @@
             const isMain = document.getElementById('view-main').classList.contains('active-tab');
             const sw = isMain ? swMain : swTags;
             if(!sw || !sw.slides.length) return;
-            
             const img = sw.slides[sw.activeIndex].querySelector('img');
             const a = document.createElement('a');
             a.href = img.src;
