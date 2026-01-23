@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Карточки Финал</title>
+    <title>Карточки Финал (Fixed)</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -20,7 +20,7 @@
         #loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .spinner { width: 50px; height: 50px; border: 4px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
 
-
+        /* Навигация */
         .nav-container { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); pointer-events: none; }
         .nav-pill { pointer-events: auto; display: flex; background: var(--pill); border: 1px solid #333; height: var(--nav-h); border-radius: 40px; padding: 0 15px; align-items: center; gap: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .nav-item { background: transparent; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 100%; cursor: pointer; }
@@ -28,49 +28,38 @@
         .nav-item span { font-size: 26px; }
         .nav-item p { font-size: 9px; margin: 0; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
 
-        .swiper { width: 310px; height: 440px; perspective: 1200px; overflow: visible; }
-        .swiper-slide { border-radius: var(--radius); background: #000; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        /* Слайдер */
+        .swiper { width: 320px; height: 480px; perspective: 1200px; overflow: visible; }
+        .swiper-slide { border-radius: var(--radius); background: #111; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); }
         
-        /* СЛОИ */
+        /* Слои фона карточки */
         .card-layer-bg { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; border-radius: inherit; overflow: hidden; }
-        .bg-half { flex: 1; width: 100%; }
+        .bg-half { flex: 1; width: 100%; position: relative; }
         
-        /* ТЕКСТУРА: Чистое наложение */
         .card-layer-overlay { 
             position: absolute; inset: 0; 
             background: url('cardbg.png') center/cover no-repeat; 
             z-index: 2; 
-            opacity: 0.6; /* Регулируй видимость тут */
+            opacity: 0.2; 
+            mix-blend-mode: overlay;
             pointer-events: none;
             border-radius: inherit;
         }
-        /* Класс для инверсии на белом фоне (добавляется через JS) */
-        .is-light-bg { filter: invert(1) contrast(1.5); opacity: 0.4; }
         
-        .main-img { position: relative; z-index: 3; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s; --radius: 35px; }
-        .main-img.fit-cover { object-fit: cover; }
-        .main-img.fit-contain { object-fit: contain; }
-        .main-img.loaded { opacity: 1; }
-
+        .main-img { position: relative; z-index: 5; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s; }
+        .main-img.visible { opacity: 1; }
+        .fit-cover { object-fit: cover; }
+        .fit-contain { object-fit: contain; }
 
         .tab-content { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .tab-content.active-tab { opacity: 1; pointer-events: auto; }
         
-        .swiper { width: 320px; height: 480px; overflow: visible; }
-        .swiper-slide { border-radius: var(--radius); background: #111; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); position: relative; }
-        
-        .card-layer-bg { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 1; }
-        .bg-half { flex: 1; width: 100%; position: relative; }
-        .card-layer-overlay { position: absolute; inset: 0; background: url('cardbg.png') center/cover; opacity: 0.2; mix-blend-mode: overlay; z-index: 2; }
-        
-        .main-img { position: relative; z-index: 5; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; }
-        .main-img.visible { opacity: 1; }
-        .fit-cover { object-fit: cover; }
-
+        /* Теги */
         .tag-wrap { position: absolute; top: 60px; left: 0; right: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 0 20px; z-index: 100; pointer-events: none; }
         .tag-btn { pointer-events: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); color: #888; border: 1px solid #333; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
         .tag-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
+        /* Пикод */
         #auth-screen { z-index: 5000; position: fixed; inset: 0; background: #000; }
         .key { width: 70px; height: 70px; border-radius: 50%; background: #151515; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
         .key:active { transform: scale(0.9); }
@@ -129,14 +118,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
-        // Хэш для пароля "1234"
         const PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; 
-        const FILES = typeof __ALL_FILES__ !== 'undefined' ? __ALL_FILES__ : [];
         const ALLOWED_TAGS = ["funny", "arguments", "narkoman", "parents", "art", "personal", "screenshot"]; 
 
         let pin = "", cache = [], swMain, swTags;
 
-        // Ввод ПИН-кода
         function kp(n) {
             if(n==='C') pin = ""; else if(pin.length < 4) pin += n;
             document.querySelectorAll('.dot').forEach((d,i) => d.className = i < pin.length ? 'dot filled' : 'dot');
@@ -151,31 +137,15 @@
             } else {
                 pin = ""; 
                 document.querySelectorAll('.dot').forEach(d => d.className = 'dot');
-                if(navigator.vibrate) navigator.vibrate(200);
             }
         }
 
-        // Запуск приложения
         async function startApp() {
-            const fileInput = document.getElementById('fIn');
-            // Слушаем выбор файлов
-            fileInput.addEventListener('change', handleUpload);
-
-            if (FILES.length > 0) {
-                document.getElementById('loading-overlay').classList.remove('hidden');
-                for (let f of FILES) {
-                    try {
-                        const res = await fetch(`images/${f}`);
-                        const blob = await res.text();
-                        const src = CryptoJS.AES.decrypt(blob, pin).toString(CryptoJS.enc.Utf8);
-                        await addCardToCache(src, f);
-                    } catch(e) { console.error(e); }
-                }
-            }
-            finishLoad();
+            document.getElementById('fIn').addEventListener('change', handleUpload);
+            document.getElementById('app').classList.remove('hidden');
+            // Здесь можно добавить загрузку существующих файлов, если они есть
         }
 
-        // Обработка ручной загрузки файлов
         async function handleUpload(e) {
             const files = Array.from(e.target.files);
             if(!files.length) return;
@@ -193,14 +163,9 @@
                 await promise;
             }
             
-            // Перерисовываем всё
-            document.getElementById('wr-main').innerHTML = '';
-            cache.forEach(item => document.getElementById('wr-main').appendChild(buildSlide(item)));
-            if(swMain) swMain.destroy();
-            swMain = initSwiper('#sw-main');
+            refreshSwiper('main');
             renderTagButtons();
-            
-            tab('main', document.querySelector('.nav-item')); // Возврат на главный экран
+            tab('main', document.querySelector('.nav-item'));
             document.getElementById('loading-overlay').classList.add('hidden');
         }
 
@@ -212,24 +177,18 @@
             document.getElementById('wr-main').appendChild(buildSlide(item));
         }
 
-        function finishLoad() {
-            document.getElementById('app').classList.remove('hidden');
-            document.getElementById('loading-overlay').classList.add('hidden');
-            renderTagButtons();
-            setTimeout(() => { swMain = initSwiper('#sw-main'); }, 100);
-        }
-
         function analyzeImage(src) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
-                    let isVert = img.height > img.width * 1.2;
+                    let isVert = img.height > img.width * 1.1;
                     const cvs = document.createElement('canvas');
                     const ctx = cvs.getContext('2d');
                     cvs.width = 1; cvs.height = 1;
                     ctx.drawImage(img, 0, 0, 1, 1);
                     const [r,g,b] = ctx.getImageData(0,0,1,1).data;
-                    resolve({ isVert, tc: `rgb(${r},${g},${b})`, bc: `rgb(${r},${g},${b})` });
+                    const color = `rgb(${r},${g},${b})`;
+                    resolve({ isVert, tc: color, bc: color });
                 };
                 img.src = src;
             });
@@ -238,19 +197,22 @@
         function buildSlide(data) {
             const div = document.createElement('div');
             div.className = 'swiper-slide';
-            let bgHTML = '';
-            if(!data.isVert) {
-                bgHTML = `<div class="card-layer-bg">
-                    <div class="bg-half" style="background:${data.tc}"><div class="card-layer-overlay"></div></div>
-                    <div class="bg-half" style="background:${data.bc}"><div class="card-layer-overlay"></div></div>
-                </div>`;
-            }
-            div.innerHTML = `${bgHTML}<img src="${data.src}" class="main-img visible ${data.isVert?'fit-cover':''}">`;
+            let bgHTML = `<div class="card-layer-bg">
+                <div class="bg-half" style="background:${data.tc}"><div class="card-layer-overlay"></div></div>
+                <div class="bg-half" style="background:${data.bc}"><div class="card-layer-overlay"></div></div>
+            </div>`;
+            div.innerHTML = `${bgHTML}<img src="${data.src}" class="main-img visible ${data.isVert?'fit-cover':'fit-contain'}">`;
             return div;
         }
 
-        function initSwiper(sel) {
-            return new Swiper(sel, { effect: "cards", grabCursor: true, speed: 400 });
+        function refreshSwiper(type) {
+            if(type === 'main') {
+                if(swMain) swMain.destroy();
+                swMain = new Swiper('#sw-main', { effect: "cards", grabCursor: true });
+            } else {
+                if(swTags) swTags.destroy();
+                swTags = new Swiper('#sw-tags', { effect: "cards", grabCursor: true });
+            }
         }
 
         function renderTagButtons() {
@@ -273,8 +235,7 @@
             wr.innerHTML = '';
             const filtered = cache.filter(item => activeTags.every(t => item.tags.includes(t)));
             filtered.forEach(item => wr.appendChild(buildSlide(item)));
-            if(swTags) swTags.destroy();
-            swTags = initSwiper('#sw-tags');
+            refreshSwiper('tags');
         }
 
         function tab(name, btn) {
@@ -287,7 +248,7 @@
         function saveActive() {
             const isMain = document.getElementById('view-main').classList.contains('active-tab');
             const sw = isMain ? swMain : swTags;
-            if(!sw || !sw.slides.length) return;
+            if(!sw || sw.slides.length === 0) return;
             const img = sw.slides[sw.activeIndex].querySelector('img');
             const a = document.createElement('a');
             a.href = img.src; a.download = 'card.png'; a.click();
